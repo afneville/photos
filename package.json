@@ -11,7 +11,11 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"test": "vitest run",
+		"test:watch": "vitest --watch",
+		"test:setup": "docker run -d --name dynamodb-local-test -p 8000:8000 amazon/dynamodb-local:latest -jar DynamoDBLocal.jar -inMemory -port 8000",
+		"test:teardown": "docker stop dynamodb-local-test && docker rm dynamodb-local-test"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
@@ -32,6 +36,12 @@
 		"tailwindcss": "^4.0.0",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
-		"vite": "^7.0.4"
+		"vite": "^7.0.4",
+		"vitest": "^3.2.4"
+	},
+	"dependencies": {
+		"@aws-sdk/client-dynamodb": "^3.873.0",
+		"@aws-sdk/lib-dynamodb": "^3.873.0",
+		"fractional-indexing": "^3.2.0"
 	}
 }

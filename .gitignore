@@ -63,3 +63,5 @@ override.tf.json
 *terraform.rc
 backend.hcl
 backend.tfvars
+
+.env
