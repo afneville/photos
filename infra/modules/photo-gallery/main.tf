@@ -13,4 +13,6 @@ resource "aws_dynamodb_table" "gallery_metadata_table" {
     name = var.range_key_attribute
     type = "S"
   }
+
+  tags = var.tags
 }
