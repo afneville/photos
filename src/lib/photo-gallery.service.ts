@@ -107,7 +107,6 @@ export class PhotoGalleryService {
 
 			const item = response.Item as PhotoArray;
 
-			// Validate required fields exist
 			if (
 				!item.photoGalleryId ||
 				!item.photoArrayId ||
@@ -117,7 +116,7 @@ export class PhotoGalleryService {
 				!item.location
 			) {
 				throw new PhotoGalleryServiceError(
-					`Invalid photo array data structure for ${photoArrayId}`
+					`Invalid photo array item for ${photoArrayId}`
 				);
 			}
 
