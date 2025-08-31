@@ -6,11 +6,59 @@ import {
 	PhotoGalleryServiceError,
 	PhotoArrayValidationError
 } from './photo-gallery.service.js';
-import { TRPC_ERROR_CODES, TRPC_ERROR_MESSAGES } from './api-types.js';
+import {
+	TRPC_ERROR_CODES,
+	TRPC_ERROR_MESSAGES,
+	type PhotoArray,
+	type PhotoArrayInput
+} from './api-types.js';
 import type * as DbTypes from './types.js';
 import type { IPhotoGalleryService } from './types.js';
 
 describe('tRPC Router', () => {
+	const DEFAULT_URI_LIST = ['uri1', 'uri2'];
+	const DEFAULT_PHOTO_ARRAY_ID = 'test-array-id';
+	const DEFAULT_TIMESTAMP = '2023-01-01T00:00:00Z';
+	const DEFAULT_LOCATION = 'test-location';
+	const DEFAULT_URIS = new Set(['uri1', 'uri2']);
+	const DEFAULT_THUMBNAIL_URI = 'thumbnail.jpg';
+	const TEST_GALLERY_ID = 'test-gallery-id';
+
+	const DEFAULT_DB_PHOTO_ARRAY: DbTypes.PhotoArray = {
+		photoGalleryId: TEST_GALLERY_ID,
+		photoArrayId: DEFAULT_PHOTO_ARRAY_ID,
+		photoUris: DEFAULT_URIS,
+		thumbnailUri: DEFAULT_THUMBNAIL_URI,
+		timestamp: DEFAULT_TIMESTAMP,
+		processed: false,
+		location: DEFAULT_LOCATION
+	};
+
+	const DEFAULT_API_INPUT: PhotoArrayInput = {
+		photoUris: DEFAULT_URI_LIST,
+		thumbnailUri: DEFAULT_THUMBNAIL_URI,
+		timestamp: DEFAULT_TIMESTAMP,
+		processed: false,
+		location: DEFAULT_LOCATION
+	};
+
+	const DEFAULT_API_RESPONSE: PhotoArray = {
+		photoArrayId: DEFAULT_PHOTO_ARRAY_ID,
+		photoUris: DEFAULT_URI_LIST,
+		thumbnailUri: DEFAULT_THUMBNAIL_URI,
+		timestamp: DEFAULT_TIMESTAMP,
+		processed: false,
+		location: DEFAULT_LOCATION
+	};
+
+	const DEFAULT_DB_INPUT: DbTypes.PhotoArrayInput = {
+		photoUris: DEFAULT_URIS,
+		thumbnailUri: DEFAULT_THUMBNAIL_URI,
+		timestamp: DEFAULT_TIMESTAMP,
+		processed: false,
+		location: DEFAULT_LOCATION
+	};
+
 	const createMockPhotoGalleryService = () => ({
 		getItem: vi.fn(),
 		getAllItems: vi.fn(),
@@ -23,7 +71,7 @@ describe('tRPC Router', () => {
 	const createTestCaller = (mockPhotoGalleryService: IPhotoGalleryService) => {
 		return appRouter.createCaller({
 			photoGalleryService: mockPhotoGalleryService,
-			photoGalleryId: 'test-gallery-id'
+			photoGalleryId: TEST_GALLERY_ID
 		});
 	};
 
@@ -32,30 +80,17 @@ describe('tRPC Router', () => {
 			const mockPhotoGalleryService = createMockPhotoGalleryService();
 			const caller = createTestCaller(mockPhotoGalleryService);
 
-			const expectedPhotoArray: DbTypes.PhotoArray = {
-				photoGalleryId: 'test-gallery-id',
-				photoArrayId: 'test-array-id',
-				photoUris: new Set(['uri1', 'uri2']),
-				timestamp: '2023-01-01T00:00:00Z',
-				processed: true,
-				location: 'test-location'
-			};
+			const expectedPhotoArray = DEFAULT_DB_PHOTO_ARRAY;
 
 			mockPhotoGalleryService.getItem.mockResolvedValue(expectedPhotoArray);
 
-			const result = await caller.getItem({ photoArrayId: 'test-array-id' });
+			const result = await caller.getItem({ photoArrayId: DEFAULT_PHOTO_ARRAY_ID });
 
-			expect(result).toEqual({
-				photoArrayId: 'test-array-id',
-				photoUris: ['uri1', 'uri2'],
-				timestamp: '2023-01-01T00:00:00Z',
-				processed: true,
-				location: 'test-location'
-			});
+			expect(result).toEqual(DEFAULT_API_RESPONSE);
 
 			expect(mockPhotoGalleryService.getItem).toHaveBeenCalledWith(
-				'test-gallery-id',
-				'test-array-id'
+				TEST_GALLERY_ID,
+				DEFAULT_PHOTO_ARRAY_ID
 			);
 		});
 
@@ -78,7 +113,7 @@ describe('tRPC Router', () => {
 			);
 
 			expect(mockPhotoGalleryService.getItem).toHaveBeenCalledWith(
-				'test-gallery-id',
+				TEST_GALLERY_ID,
 				'nonexistent-id'
 			);
 		});
@@ -90,22 +125,8 @@ describe('tRPC Router', () => {
 			const caller = createTestCaller(mockPhotoGalleryService);
 
 			const expectedPhotoArrays: DbTypes.PhotoArray[] = [
-				{
-					photoGalleryId: 'test-gallery-id',
-					photoArrayId: 'array-1',
-					photoUris: new Set(['uri1']),
-					timestamp: '2023-01-01T00:00:00Z',
-					processed: true,
-					location: 'location-1'
-				},
-				{
-					photoGalleryId: 'test-gallery-id',
-					photoArrayId: 'array-2',
-					photoUris: new Set(['uri2', 'uri3']),
-					timestamp: '2023-01-02T00:00:00Z',
-					processed: false,
-					location: 'location-2'
-				}
+				{ ...DEFAULT_DB_PHOTO_ARRAY, photoArrayId: 'array-1' },
+				{ ...DEFAULT_DB_PHOTO_ARRAY, photoArrayId: 'array-2' }
 			];
 
 			mockPhotoGalleryService.getAllItems.mockResolvedValue(expectedPhotoArrays);
@@ -113,23 +134,11 @@ describe('tRPC Router', () => {
 			const result = await caller.getAllItems({});
 
 			expect(result).toEqual([
-				{
-					photoArrayId: 'array-1',
-					photoUris: ['uri1'],
-					timestamp: '2023-01-01T00:00:00Z',
-					processed: true,
-					location: 'location-1'
-				},
-				{
-					photoArrayId: 'array-2',
-					photoUris: ['uri2', 'uri3'],
-					timestamp: '2023-01-02T00:00:00Z',
-					processed: false,
-					location: 'location-2'
-				}
+				{ ...DEFAULT_API_RESPONSE, photoArrayId: 'array-1' },
+				{ ...DEFAULT_API_RESPONSE, photoArrayId: 'array-2' }
 			]);
 
-			expect(mockPhotoGalleryService.getAllItems).toHaveBeenCalledWith('test-gallery-id');
+			expect(mockPhotoGalleryService.getAllItems).toHaveBeenCalledWith(TEST_GALLERY_ID);
 		});
 	});
 
@@ -138,21 +147,8 @@ describe('tRPC Router', () => {
 			const mockPhotoGalleryService = createMockPhotoGalleryService();
 			const caller = createTestCaller(mockPhotoGalleryService);
 
-			const inputPhotoArray = {
-				photoUris: ['uri1', 'uri2'],
-				timestamp: '2023-01-01T00:00:00Z',
-				processed: false,
-				location: 'test-location'
-			};
-
-			const createdPhotoArray: DbTypes.PhotoArray = {
-				photoGalleryId: 'test-gallery-id',
-				photoArrayId: 'generated-id',
-				photoUris: new Set(['uri1', 'uri2']),
-				timestamp: '2023-01-01T00:00:00Z',
-				processed: false,
-				location: 'test-location'
-			};
+			const inputPhotoArray = DEFAULT_API_INPUT;
+			const createdPhotoArray = { ...DEFAULT_DB_PHOTO_ARRAY, photoArrayId: 'generated-id' };
 
 			mockPhotoGalleryService.createItem.mockResolvedValue(createdPhotoArray);
 
@@ -162,13 +158,8 @@ describe('tRPC Router', () => {
 			expect(result).not.toHaveProperty('photoGalleryId');
 
 			expect(mockPhotoGalleryService.createItem).toHaveBeenCalledWith(
-				'test-gallery-id',
-				{
-					photoUris: new Set(['uri1', 'uri2']),
-					timestamp: '2023-01-01T00:00:00Z',
-					processed: false,
-					location: 'test-location'
-				},
+				TEST_GALLERY_ID,
+				DEFAULT_DB_INPUT,
 				undefined,
 				undefined
 			);
@@ -185,8 +176,8 @@ describe('tRPC Router', () => {
 			await caller.deleteItem({ photoArrayId: 'test-array-id' });
 
 			expect(mockPhotoGalleryService.deleteItem).toHaveBeenCalledWith(
-				'test-gallery-id',
-				'test-array-id'
+				TEST_GALLERY_ID,
+				DEFAULT_PHOTO_ARRAY_ID
 			);
 		});
 
@@ -198,7 +189,7 @@ describe('tRPC Router', () => {
 				new PhotoGalleryServiceError('Delete failed')
 			);
 
-			await expect(caller.deleteItem({ photoArrayId: 'test-array-id' })).rejects.toSatisfy(
+			await expect(caller.deleteItem({ photoArrayId: DEFAULT_PHOTO_ARRAY_ID })).rejects.toSatisfy(
 				(error) => {
 					expect(error).toBeInstanceOf(TRPCError);
 					const trpcError = error as TRPCError;

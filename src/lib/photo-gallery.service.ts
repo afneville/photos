@@ -113,7 +113,8 @@ export class PhotoGalleryService {
 				!item.photoUris ||
 				!item.timestamp ||
 				item.processed === undefined ||
-				!item.location
+				!item.location ||
+				!item.thumbnailUri
 			) {
 				throw new PhotoGalleryServiceError(
 					`Invalid photo array item for ${photoArrayId}`
@@ -159,6 +160,12 @@ export class PhotoGalleryService {
 				updateExpressions.push('#location = :location');
 				expressionAttributeNames['#location'] = 'location';
 				expressionAttributeValues[':location'] = updates.location;
+			}
+
+			if (updates.thumbnailUri !== undefined) {
+				updateExpressions.push('#thumbnailUri = :thumbnailUri');
+				expressionAttributeNames['#thumbnailUri'] = 'thumbnailUri';
+				expressionAttributeValues[':thumbnailUri'] = updates.thumbnailUri;
 			}
 
 			if (updateExpressions.length === 0) {

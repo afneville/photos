@@ -1,24 +1,22 @@
 import * as DbTypes from './types.js';
 import { z } from 'zod';
 
-// tRPC Error Codes
 export const TRPC_ERROR_CODES = {
 	NOT_FOUND: 'NOT_FOUND',
-	BAD_REQUEST: 'BAD_REQUEST', 
+	BAD_REQUEST: 'BAD_REQUEST',
 	INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR'
 } as const;
 
-// tRPC Error Messages
 export const TRPC_ERROR_MESSAGES = {
 	PHOTO_ARRAY_NOT_FOUND: 'Photo array not found',
 	INVALID_INPUT: 'Invalid input provided',
 	INTERNAL_SERVER_ERROR: 'An internal server error occurred'
 } as const;
 
-// API types that use arrays instead of Sets for JSON compatibility
 export interface PhotoArray {
 	photoArrayId: string;
 	photoUris: string[];
+	thumbnailUri: string;
 	timestamp: string;
 	processed: boolean;
 	location: string;
@@ -26,6 +24,7 @@ export interface PhotoArray {
 
 export interface PhotoArrayInput {
 	photoUris: string[];
+	thumbnailUri: string;
 	timestamp: string;
 	processed: boolean;
 	location: string;
@@ -33,6 +32,7 @@ export interface PhotoArrayInput {
 
 export interface PhotoArrayUpdate {
 	photoUris?: string[];
+	thumbnailUri?: string;
 	processed?: boolean;
 	location?: string;
 }
@@ -40,6 +40,7 @@ export interface PhotoArrayUpdate {
 // Zod schemas
 export const photoArrayInputSchema = z.object({
 	photoUris: z.array(z.string()),
+	thumbnailUri: z.string(),
 	timestamp: z.string(),
 	processed: z.boolean(),
 	location: z.string()
@@ -47,6 +48,7 @@ export const photoArrayInputSchema = z.object({
 
 export const photoArrayUpdateSchema = z.object({
 	photoUris: z.array(z.string()).optional(),
+	thumbnailUri: z.string().optional(),
 	processed: z.boolean().optional(),
 	location: z.string().optional()
 });
@@ -78,7 +80,6 @@ export const moveItemSchema = z.object({
 	afterRangeKey: z.string().optional()
 });
 
-// Conversion functions
 export function toApiType(dbItem: DbTypes.PhotoArray): PhotoArray {
 	const { photoGalleryId, ...apiItem } = dbItem;
 	return {
@@ -100,3 +101,4 @@ export function toDbUpdateType(apiUpdate: PhotoArrayUpdate): DbTypes.PhotoArrayU
 		photoUris: apiUpdate.photoUris ? new Set(apiUpdate.photoUris) : undefined
 	};
 }
+
