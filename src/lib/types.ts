@@ -8,10 +8,15 @@ export interface PhotoArray {
 }
 
 export interface PhotoArrayInput {
-	photoUris: Set<string>;
+	photoCount: number;
 	timestamp: string;
 	processed: boolean;
 	location: string;
+}
+
+export interface PhotoArrayCreationResponse {
+	photoArray: PhotoArray;
+	presignedUrls: string[];
 }
 
 export interface PhotoArrayUpdate {
@@ -26,7 +31,7 @@ export interface IPhotoGalleryService {
 		item: PhotoArrayInput,
 		beforeRangeKey?: string,
 		afterRangeKey?: string
-	): Promise<PhotoArray>;
+	): Promise<PhotoArrayCreationResponse>;
 	getItem(photoGalleryId: string, photoArrayId: string): Promise<PhotoArray>;
 	updateItem(
 		photoGalleryId: string,

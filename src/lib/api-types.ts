@@ -22,10 +22,15 @@ export interface PhotoArray {
 }
 
 export interface PhotoArrayInput {
-	photoUris: string[];
+	photoCount: number;
 	timestamp: string;
 	processed: boolean;
 	location: string;
+}
+
+export interface PhotoArrayCreationResponse {
+	photoArray: PhotoArray;
+	presignedUrls: string[];
 }
 
 export interface PhotoArrayUpdate {
@@ -36,7 +41,7 @@ export interface PhotoArrayUpdate {
 
 // Zod schemas
 export const photoArrayInputSchema = z.object({
-	photoUris: z.array(z.string()),
+	photoCount: z.number().min(1).max(20),
 	timestamp: z.string(),
 	processed: z.boolean(),
 	location: z.string()
@@ -85,8 +90,7 @@ export function toApiType(dbItem: DbTypes.PhotoArray): PhotoArray {
 
 export function toDbInputType(apiInput: PhotoArrayInput): DbTypes.PhotoArrayInput {
 	return {
-		...apiInput,
-		photoUris: new Set(apiInput.photoUris)
+		...apiInput
 	};
 }
 

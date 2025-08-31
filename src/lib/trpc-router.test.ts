@@ -21,7 +21,8 @@ describe('tRPC Router', () => {
 	const DEFAULT_TIMESTAMP = '2023-01-01T00:00:00Z';
 	const DEFAULT_LOCATION = 'test-location';
 	const DEFAULT_URIS = new Set(['uri1', 'uri2']);
-	const TEST_GALLERY_ID = 'test-gallery-id';
+	const DEFAULT_PHOTO_COUNT = 2;
+	const TEST_GALLERY_ID = 'test-gallery';
 
 	const DEFAULT_DB_PHOTO_ARRAY: DbTypes.PhotoArray = {
 		photoGalleryId: TEST_GALLERY_ID,
@@ -33,7 +34,7 @@ describe('tRPC Router', () => {
 	};
 
 	const DEFAULT_API_INPUT: PhotoArrayInput = {
-		photoUris: DEFAULT_URI_LIST,
+		photoCount: DEFAULT_PHOTO_COUNT,
 		timestamp: DEFAULT_TIMESTAMP,
 		processed: false,
 		location: DEFAULT_LOCATION
@@ -48,7 +49,7 @@ describe('tRPC Router', () => {
 	};
 
 	const DEFAULT_DB_INPUT: DbTypes.PhotoArrayInput = {
-		photoUris: DEFAULT_URIS,
+		photoCount: DEFAULT_PHOTO_COUNT,
 		timestamp: DEFAULT_TIMESTAMP,
 		processed: false,
 		location: DEFAULT_LOCATION
@@ -145,12 +146,17 @@ describe('tRPC Router', () => {
 			const inputPhotoArray = DEFAULT_API_INPUT;
 			const createdPhotoArray = { ...DEFAULT_DB_PHOTO_ARRAY, photoArrayId: 'generated-id' };
 
-			mockPhotoGalleryService.createItem.mockResolvedValue(createdPhotoArray);
+			const mockResponse = {
+				photoArray: createdPhotoArray,
+				presignedUrls: ['url1', 'url2']
+			};
+			mockPhotoGalleryService.createItem.mockResolvedValue(mockResponse);
 
 			const result = await caller.createItem({ item: inputPhotoArray });
 
-			expect(result.photoUris).toEqual(['uri1', 'uri2']);
-			expect(result).not.toHaveProperty('photoGalleryId');
+			expect(result.photoArray.photoUris).toEqual(['uri1', 'uri2']);
+			expect(result.photoArray).not.toHaveProperty('photoGalleryId');
+			expect(result.presignedUrls).toEqual(['url1', 'url2']);
 
 			expect(mockPhotoGalleryService.createItem).toHaveBeenCalledWith(
 				TEST_GALLERY_ID,

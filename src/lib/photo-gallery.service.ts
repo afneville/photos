@@ -8,9 +8,17 @@ import {
 	QueryCommand,
 	TransactWriteCommand
 } from '@aws-sdk/lib-dynamodb';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { generateKeyBetween } from 'fractional-indexing';
-import { DYNAMODB_TABLE, AWS_REGION } from '$env/dynamic/private';
-import type { PhotoArray, PhotoArrayInput, PhotoArrayUpdate } from './types.js';
+import { v4 as uuidv4 } from 'uuid';
+import { env } from '$env/dynamic/private';
+import type {
+	PhotoArray,
+	PhotoArrayInput,
+	PhotoArrayUpdate,
+	PhotoArrayCreationResponse
+} from './types.js';
 
 export class PhotoGalleryServiceError extends Error {
 	constructor(
@@ -37,25 +45,35 @@ export class PhotoArrayValidationError extends PhotoGalleryServiceError {
 }
 
 export class PhotoGalleryService {
-	private readonly client: DynamoDBDocumentClient;
+	private readonly dynamoDbDocClient: DynamoDBDocumentClient;
+	private readonly s3Client: S3Client;
 	private readonly tableName: string;
+	private readonly stagingBucketName: string;
 
-	constructor(client?: DynamoDBDocumentClient, tableName?: string) {
-		if (client && tableName) {
-			this.client = client;
-			this.tableName = tableName;
-		} else {
-			const dynamoClient = new DynamoDBClient({
-				region: AWS_REGION || 'eu-west-2'
-			});
-
-			if (!DYNAMODB_TABLE) {
-				throw new Error('DYNAMODB_TABLE environment variable is required');
-			}
-
-			this.client = DynamoDBDocumentClient.from(dynamoClient);
-			this.tableName = DYNAMODB_TABLE;
+	constructor(
+		dynamoDbDocClient?: DynamoDBDocumentClient,
+		s3Client?: S3Client,
+		tableName?: string,
+		stagingBucketName?: string
+	) {
+		if (!env.AWS_REGION) {
+			throw new Error('AWS_REGION environment variable must be set');
 		}
+		if (!env.DYNAMODB_TABLE && !tableName) {
+			throw new Error('DYNAMODB_TABLE environment variable or tableName paramater required');
+		}
+		if (!env.STAGING_BUCKET && !stagingBucketName) {
+			throw new Error(
+				'STAGING_BUCKET environment variable or stagingBucketName paramater required'
+			);
+		}
+		this.tableName = tableName ? tableName : env.DYNAMODB_TABLE!;
+		this.stagingBucketName = stagingBucketName ? stagingBucketName : env.STAGING_BUCKET!;
+
+		this.s3Client = s3Client ? s3Client : new S3Client({ region: env.AWS_REGION });
+		this.dynamoDbDocClient = dynamoDbDocClient
+			? dynamoDbDocClient
+			: DynamoDBDocumentClient.from(new DynamoDBClient({ region: env.AWS_REGION }));
 	}
 
 	async createItem(
@@ -63,23 +81,46 @@ export class PhotoGalleryService {
 		inputItem: PhotoArrayInput,
 		beforeRangeKey?: string,
 		afterRangeKey?: string
-	): Promise<PhotoArray> {
+	): Promise<PhotoArrayCreationResponse> {
 		try {
-			let photoArrayId: string = generateKeyBetween(afterRangeKey, beforeRangeKey);
+			const photoArrayId: string = generateKeyBetween(afterRangeKey, beforeRangeKey);
+
+			const photoUris = new Set<string>();
+			for (let i = 0; i < inputItem.photoCount; i++) {
+				photoUris.add(uuidv4());
+			}
+
 			const item: PhotoArray = {
 				photoGalleryId,
 				photoArrayId,
-				...inputItem
+				photoUris,
+				timestamp: inputItem.timestamp,
+				processed: inputItem.processed,
+				location: inputItem.location
 			};
 
-			await this.client.send(
+			await this.dynamoDbDocClient.send(
 				new PutCommand({
 					TableName: this.tableName,
 					Item: item
 				})
 			);
 
-			return item;
+			const presignedUrls: string[] = [];
+			for (const photoUri of photoUris) {
+				const command = new PutObjectCommand({
+					Bucket: this.stagingBucketName,
+					Key: `${photoGalleryId}/${photoArrayId}/${photoUri}`,
+					ContentType: 'image/*'
+				});
+				const url = await getSignedUrl(this.s3Client, command, { expiresIn: 900 });
+				presignedUrls.push(url);
+			}
+
+			return {
+				photoArray: item,
+				presignedUrls
+			};
 		} catch (error) {
 			const err = error as Error;
 			if (err.name === 'ValidationException') {
@@ -91,7 +132,7 @@ export class PhotoGalleryService {
 
 	async getItem(photoGalleryId: string, photoArrayId: string): Promise<PhotoArray> {
 		try {
-			const response = await this.client.send(
+			const response = await this.dynamoDbDocClient.send(
 				new GetCommand({
 					TableName: this.tableName,
 					Key: {
@@ -115,9 +156,7 @@ export class PhotoGalleryService {
 				item.processed === undefined ||
 				!item.location
 			) {
-				throw new PhotoGalleryServiceError(
-					`Invalid photo array item for ${photoArrayId}`
-				);
+				throw new PhotoGalleryServiceError(`Invalid photo array item for ${photoArrayId}`);
 			}
 
 			return item;
@@ -126,10 +165,7 @@ export class PhotoGalleryService {
 			if (err instanceof PhotoArrayNotFoundError || err instanceof PhotoGalleryServiceError) {
 				throw err;
 			}
-			throw new PhotoGalleryServiceError(
-				`Failed to get photo array ${photoArrayId}`,
-				err
-			);
+			throw new PhotoGalleryServiceError(`Failed to get photo array ${photoArrayId}`, err);
 		}
 	}
 
@@ -161,12 +197,11 @@ export class PhotoGalleryService {
 				expressionAttributeValues[':location'] = updates.location;
 			}
 
-
 			if (updateExpressions.length === 0) {
 				throw new PhotoArrayValidationError('No updates provided');
 			}
 
-			const response = await this.client.send(
+			const response = await this.dynamoDbDocClient.send(
 				new UpdateCommand({
 					TableName: this.tableName,
 					Key: {
@@ -192,16 +227,13 @@ export class PhotoGalleryService {
 			if (err.name === 'ConditionalCheckFailedException') {
 				throw new PhotoArrayNotFoundError(photoArrayId, err);
 			}
-			throw new PhotoGalleryServiceError(
-				`Failed to update photo array ${photoArrayId}`,
-				err
-			);
+			throw new PhotoGalleryServiceError(`Failed to update photo array ${photoArrayId}`, err);
 		}
 	}
 
 	async deleteItem(photoGalleryId: string, photoArrayId: string): Promise<void> {
 		try {
-			await this.client.send(
+			await this.dynamoDbDocClient.send(
 				new DeleteCommand({
 					TableName: this.tableName,
 					Key: {
@@ -212,16 +244,13 @@ export class PhotoGalleryService {
 			);
 		} catch (error) {
 			const err = error as Error;
-			throw new PhotoGalleryServiceError(
-				`Failed to delete photo array ${photoArrayId}`,
-				err
-			);
+			throw new PhotoGalleryServiceError(`Failed to delete photo array ${photoArrayId}`, err);
 		}
 	}
 
 	async getAllItems(photoGalleryId: string): Promise<PhotoArray[]> {
 		try {
-			const response = await this.client.send(
+			const response = await this.dynamoDbDocClient.send(
 				new QueryCommand({
 					TableName: this.tableName,
 					KeyConditionExpression: '#photoGalleryId = :photoGalleryId',
@@ -260,7 +289,7 @@ export class PhotoGalleryService {
 				photoArrayId: newPhotoArrayId
 			};
 
-			await this.client.send(
+			await this.dynamoDbDocClient.send(
 				new TransactWriteCommand({
 					TransactItems: [
 						{
@@ -297,10 +326,7 @@ export class PhotoGalleryService {
 			if (err.name === 'ValidationException') {
 				throw new PhotoArrayValidationError(err.message || 'Move validation failed', err);
 			}
-			throw new PhotoGalleryServiceError(
-				`Failed to move photo array ${photoArrayId}`,
-				err
-			);
+			throw new PhotoGalleryServiceError(`Failed to move photo array ${photoArrayId}`, err);
 		}
 	}
 }

@@ -1,8 +1,8 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { PhotoGalleryService, PhotoArrayNotFoundError, PhotoGalleryServiceError, PhotoArrayValidationError } from './photo-gallery.service.js';
-import { PHOTO_GALLERY_ID } from '$env/dynamic/private';
-import type { PhotoArray } from './api-types.js';
+import { env } from '$env/dynamic/private';
+import type { PhotoArray, PhotoArrayCreationResponse } from './api-types.js';
 import type { IPhotoGalleryService } from './types.js';
 import {
 	toApiType,
@@ -53,13 +53,13 @@ function handleServiceError(error: unknown): never {
 }
 
 export function createContext(): Context {
-	if (!PHOTO_GALLERY_ID) {
+	if (!env.PHOTO_GALLERY_ID) {
 		throw new Error('PHOTO_GALLERY_ID environment variable is required');
 	}
 
 	return {
 		photoGalleryService: new PhotoGalleryService(),
-		photoGalleryId: PHOTO_GALLERY_ID
+		photoGalleryId: env.PHOTO_GALLERY_ID
 	};
 }
 
@@ -73,15 +73,18 @@ export const appRouter = router({
 			}: {
 				ctx: Context;
 				input: z.infer<typeof createItemSchema>;
-			}): Promise<PhotoArray> => {
+			}): Promise<PhotoArrayCreationResponse> => {
 				try {
-					const dbItem = await ctx.photoGalleryService.createItem(
+					const response = await ctx.photoGalleryService.createItem(
 						ctx.photoGalleryId,
 						toDbInputType(input.item),
 						input.beforeRangeKey,
 						input.afterRangeKey
 					);
-					return toApiType(dbItem);
+					return {
+						photoArray: toApiType(response.photoArray),
+						presignedUrls: response.presignedUrls
+					};
 				} catch (error) {
 					handleServiceError(error);
 				}

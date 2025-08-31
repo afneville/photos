@@ -1,14 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, afterEach } from 'vitest';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
 	setupTestTable,
 	teardownTestTable,
-	getTestClient,
+	getTestDynamoDbDocClient,
 	startContainer,
 	stopContainer,
-	TEST_TABLE,
-	TEST_PARTITION_KEY
+	TEST_DYNAMODB_TABLE,
+	TEST_PARTITION_KEY,
+	TEST_STAGING_BUCKET,
+	TEST_AWS_REGION
 } from './test-setup.js';
 import type { PhotoArray, PhotoArrayInput } from './types.js';
 import {
@@ -18,22 +21,28 @@ import {
 } from './photo-gallery.service.js';
 
 vi.mock('$env/dynamic/private', () => ({
-	DYNAMODB_TABLE: TEST_TABLE,
-	PARTITION_KEY: TEST_PARTITION_KEY,
-	AWS_REGION: 'eu-west-2'
+	env: {
+		DYNAMODB_TABLE: TEST_DYNAMODB_TABLE,
+		STAGING_BUCKET: TEST_STAGING_BUCKET,
+		PARTITION_KEY: TEST_PARTITION_KEY,
+		AWS_REGION: TEST_AWS_REGION
+	}
+}));
+
+vi.mock('@aws-sdk/s3-request-presigner', () => ({
+	getSignedUrl: vi.fn()
 }));
 
 describe('PhotoGalleryService', () => {
 	let service: PhotoGalleryService;
-	let client: DynamoDBDocumentClient;
+	let dynamoDbDocClient: DynamoDBDocumentClient;
+	let s3Client: S3Client;
 
-	// Test data constants
 	const DEFAULT_TIMESTAMP = '2024-08-24T10:00:00.000Z';
 	const DEFAULT_LOCATION = 'Dublin, Ireland';
-	const DEFAULT_URIS = new Set(['uri1', 'uri2']);
-
+	const DEFAULT_PHOTO_COUNT = 2;
 	const DEFAULT_INPUT: PhotoArrayInput = {
-		photoUris: DEFAULT_URIS,
+		photoCount: DEFAULT_PHOTO_COUNT,
 		timestamp: DEFAULT_TIMESTAMP,
 		processed: false,
 		location: DEFAULT_LOCATION
@@ -41,7 +50,14 @@ describe('PhotoGalleryService', () => {
 
 	beforeAll(async () => {
 		await startContainer();
-		client = getTestClient();
+		dynamoDbDocClient = getTestDynamoDbDocClient();
+		s3Client = new S3Client({
+			region: TEST_AWS_REGION,
+			credentials: {
+				accessKeyId: 'test',
+				secretAccessKey: 'test'
+			}
+		});
 	});
 
 	afterAll(async () => {
@@ -50,32 +66,51 @@ describe('PhotoGalleryService', () => {
 
 	afterEach(async () => {
 		await teardownTestTable();
+		vi.clearAllMocks();
 	});
 
 	beforeEach(async () => {
 		await setupTestTable();
-		service = new PhotoGalleryService(client, TEST_TABLE);
+		service = new PhotoGalleryService(dynamoDbDocClient, s3Client);
 	});
 
 	describe('Basic CRUD Operations', () => {
 		it('should create and retrieve an item', async () => {
 			const input = DEFAULT_INPUT;
 
-			const created = await service.createItem(TEST_PARTITION_KEY, input);
+			const response = await service.createItem(TEST_PARTITION_KEY, input);
+			const created = response.photoArray;
 			expect(created.photoGalleryId).toBe(TEST_PARTITION_KEY);
 			expect(created.photoArrayId).toBeDefined();
-			expect(created.photoUris).toEqual(input.photoUris);
+			expect(created.photoUris.size).toBe(input.photoCount);
 			expect(created.timestamp).toBe(input.timestamp);
 			expect(created.processed).toBe(false);
 			expect(created.location).toBe(input.location);
+			expect(response.presignedUrls).toHaveLength(input.photoCount);
 
 			const retrieved = await service.getItem(TEST_PARTITION_KEY, created.photoArrayId);
 			expect(retrieved).toEqual(created);
 		});
 
+		it('should generate presigned URLs on create', async () => {
+			const input = { ...DEFAULT_INPUT, photoCount: 3 };
+			const mockPresignedUrl = 'https://mock-url.com/test.jpg';
+			(getSignedUrl as vi.Mock).mockResolvedValue(mockPresignedUrl);
+
+			const response = await service.createItem(TEST_PARTITION_KEY, input);
+
+			expect(response.presignedUrls).toHaveLength(3);
+			expect(response.presignedUrls.every((url) => url === mockPresignedUrl)).toBe(true);
+			expect(getSignedUrl).toHaveBeenCalledTimes(3);
+			expect(getSignedUrl).toHaveBeenCalledWith(s3Client, expect.any(PutObjectCommand), {
+				expiresIn: 900
+			});
+		});
+
 		it('should update non-key attributes', async () => {
 			const input = DEFAULT_INPUT;
-			const created = await service.createItem(TEST_PARTITION_KEY, input);
+			const response = await service.createItem(TEST_PARTITION_KEY, input);
+			const created = response.photoArray;
 
 			const updated = await service.updateItem(TEST_PARTITION_KEY, created.photoArrayId, {
 				processed: true,
@@ -83,12 +118,13 @@ describe('PhotoGalleryService', () => {
 			});
 			expect(updated.processed).toBe(true);
 			expect(updated.location).toBe('Birmingham, UK');
-			expect(updated.photoUris).toEqual(input.photoUris);
+			expect(updated.photoUris).toEqual(created.photoUris);
 		});
 
 		it('should throw validation error when no updates provided', async () => {
 			const input = DEFAULT_INPUT;
-			const created = await service.createItem(TEST_PARTITION_KEY, input);
+			const response = await service.createItem(TEST_PARTITION_KEY, input);
+			const created = response.photoArray;
 
 			await expect(
 				service.updateItem(TEST_PARTITION_KEY, created.photoArrayId, {})
@@ -97,7 +133,8 @@ describe('PhotoGalleryService', () => {
 
 		it('should delete an item', async () => {
 			const input = DEFAULT_INPUT;
-			const created = await service.createItem(TEST_PARTITION_KEY, input);
+			const response = await service.createItem(TEST_PARTITION_KEY, input);
+			const created = response.photoArray;
 
 			await service.deleteItem(TEST_PARTITION_KEY, created.photoArrayId);
 			await expect(
@@ -108,23 +145,26 @@ describe('PhotoGalleryService', () => {
 
 	describe('Fractional Indexing and Ordering', () => {
 		it('should create items with keys that allow insertions before', async () => {
-			const first = await service.createItem(TEST_PARTITION_KEY, DEFAULT_INPUT);
-			const second = await service.createItem(
+			const firstResponse = await service.createItem(TEST_PARTITION_KEY, DEFAULT_INPUT);
+			const first = firstResponse.photoArray;
+			const secondResponse = await service.createItem(
 				TEST_PARTITION_KEY,
 				DEFAULT_INPUT,
 				first.photoArrayId
 			);
+			const second = secondResponse.photoArray;
 			expect(second.photoArrayId < first.photoArrayId).toBe(true);
 		});
 
 		it('should maintain correct order when multiple items are created', async () => {
 			const items: PhotoArray[] = [];
 			for (let i = 0; i < 5; i++) {
-				const input = { ...DEFAULT_INPUT, photoUris: new Set([`uri${i}`]) };
+				const input = { ...DEFAULT_INPUT, photoCount: 1 };
 
 				const beforeRangeKey: string | undefined =
 					items.length > 0 ? items[items.length - 1].photoArrayId : undefined;
-				items.push(await service.createItem(TEST_PARTITION_KEY, input, beforeRangeKey));
+				const response = await service.createItem(TEST_PARTITION_KEY, input, beforeRangeKey);
+				items.push(response.photoArray);
 			}
 
 			const allItems = await service.getAllItems(TEST_PARTITION_KEY);
@@ -135,15 +175,22 @@ describe('PhotoGalleryService', () => {
 		});
 
 		it('should handle positioning with before and after keys', async () => {
-			const item3 = await service.createItem(TEST_PARTITION_KEY, DEFAULT_INPUT);
-			const item1 = await service.createItem(TEST_PARTITION_KEY, DEFAULT_INPUT, item3.photoArrayId);
+			const response3 = await service.createItem(TEST_PARTITION_KEY, DEFAULT_INPUT);
+			const item3 = response3.photoArray;
+			const response1 = await service.createItem(
+				TEST_PARTITION_KEY,
+				DEFAULT_INPUT,
+				item3.photoArrayId
+			);
+			const item1 = response1.photoArray;
 
-			const item2 = await service.createItem(
+			const response2 = await service.createItem(
 				TEST_PARTITION_KEY,
 				DEFAULT_INPUT,
 				item3.photoArrayId,
 				item1.photoArrayId
 			);
+			const item2 = response2.photoArray;
 			expect(item2.photoArrayId < item3.photoArrayId).toBe(true);
 			expect(item2.photoArrayId > item1.photoArrayId).toBe(true);
 		});
@@ -151,20 +198,23 @@ describe('PhotoGalleryService', () => {
 
 	describe('Move Item Operations', () => {
 		it('should move item to new position', async () => {
-			const item3 = await service.createItem(TEST_PARTITION_KEY, {
+			const response3 = await service.createItem(TEST_PARTITION_KEY, {
 				...DEFAULT_INPUT,
 				location: '3'
 			});
-			const item2 = await service.createItem(
+			const item3 = response3.photoArray;
+			const response2 = await service.createItem(
 				TEST_PARTITION_KEY,
 				{ ...DEFAULT_INPUT, location: '2' },
 				item3.photoArrayId
 			);
-			const item1 = await service.createItem(
+			const item2 = response2.photoArray;
+			const response1 = await service.createItem(
 				TEST_PARTITION_KEY,
 				{ ...DEFAULT_INPUT, location: '1' },
 				item2.photoArrayId
 			);
+			const item1 = response1.photoArray;
 
 			let movedItem = await service.moveItem(
 				TEST_PARTITION_KEY,

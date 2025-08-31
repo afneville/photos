@@ -1,0 +1,10 @@
+
+import { caller } from '$lib/trpc-caller';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async (event) => {
+  const photoArrays = await caller.getAllItems({});
+  return {
+    photoArrays
+  };
+};
