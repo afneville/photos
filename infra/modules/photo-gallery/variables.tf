@@ -16,8 +16,31 @@ variable "range_key_attribute" {
 }
 
 variable "staging_bucket_name" {
-  description = "Name of the S3 bucket for staging uploads"
+  description = "Name of the S3 bucket for uploading images"
   type        = string
+}
+
+variable "cloudfront_enabled" {
+  description = "Serve images with CloudFront"
+  type        = bool
+  default     = false
+}
+
+variable "processed_bucket_name" {
+  description = "Name of the S3 bucket for processed images"
+  type        = string
+}
+
+variable "hosted_zone" {
+  description = "Route53 hosted zone name - only used when cloudfront_enabled is true"
+  type        = string
+  default     = ""
+}
+
+variable "domain_names" {
+  description = "List of domain names for CloudFront aliases - only used when cloudfront_enabled is true"
+  type        = list(string)
+  default     = []
 }
 
 variable "tags" {

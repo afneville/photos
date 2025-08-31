@@ -31,3 +31,23 @@ resource "aws_s3_bucket_public_access_block" "staging_bucket_pab" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+module "cloudfront_hosting" {
+  count  = var.cloudfront_enabled ? 1 : 0
+  source = "../../../../cached-bucket-tf"
+  providers = {
+    aws.n-virginia = aws.n-virginia
+  }
+
+  bucket_name  = var.processed_bucket_name
+  hosted_zone  = var.hosted_zone
+  domain_names = var.domain_names
+}
+
+module "bucket_hosting" {
+  count  = var.cloudfront_enabled ? 0 : 1
+  source = "../s3-bucket-hosting"
+
+  bucket_name = var.processed_bucket_name
+  tags        = var.tags
+}
