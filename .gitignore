@@ -65,3 +65,5 @@ backend.hcl
 backend.tfvars
 
 .env
+.aws-sam
+serverless/events

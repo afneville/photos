@@ -40,7 +40,7 @@ def get_dynamodb_resource():
 
 
 def generate_photo_uris(count=4):
-    return [f"{uuid.uuid4()}.jpg" for _ in range(count)]
+    return [f"{uuid.uuid4()}" for _ in range(count)]
 
 
 def generate_timestamp():
