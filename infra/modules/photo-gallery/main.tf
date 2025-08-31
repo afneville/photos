@@ -16,3 +16,18 @@ resource "aws_dynamodb_table" "gallery_metadata_table" {
 
   tags = var.tags
 }
+
+resource "aws_s3_bucket" "staging_bucket" {
+  bucket = var.staging_bucket_name
+
+  tags = var.tags
+}
+
+resource "aws_s3_bucket_public_access_block" "staging_bucket_pab" {
+  bucket = aws_s3_bucket.staging_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}

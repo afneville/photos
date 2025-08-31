@@ -15,6 +15,11 @@ variable "range_key_attribute" {
   default     = "photoArrayId"
 }
 
+variable "staging_bucket_name" {
+  description = "Name of the S3 bucket for staging uploads"
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
