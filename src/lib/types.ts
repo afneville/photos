@@ -2,7 +2,6 @@ export interface PhotoArray {
 	photoGalleryId: string;
 	photoArrayId: string;
 	photoUris: Set<string>;
-	thumbnailUri: string;
 	timestamp: string;
 	processed: boolean;
 	location: string;
@@ -10,7 +9,6 @@ export interface PhotoArray {
 
 export interface PhotoArrayInput {
 	photoUris: Set<string>;
-	thumbnailUri: string;
 	timestamp: string;
 	processed: boolean;
 	location: string;
@@ -18,7 +16,6 @@ export interface PhotoArrayInput {
 
 export interface PhotoArrayUpdate {
 	photoUris?: Set<string>;
-	thumbnailUri?: string;
 	processed?: boolean;
 	location?: string;
 }

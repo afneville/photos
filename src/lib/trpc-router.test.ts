@@ -21,14 +21,12 @@ describe('tRPC Router', () => {
 	const DEFAULT_TIMESTAMP = '2023-01-01T00:00:00Z';
 	const DEFAULT_LOCATION = 'test-location';
 	const DEFAULT_URIS = new Set(['uri1', 'uri2']);
-	const DEFAULT_THUMBNAIL_URI = 'thumbnail.jpg';
 	const TEST_GALLERY_ID = 'test-gallery-id';
 
 	const DEFAULT_DB_PHOTO_ARRAY: DbTypes.PhotoArray = {
 		photoGalleryId: TEST_GALLERY_ID,
 		photoArrayId: DEFAULT_PHOTO_ARRAY_ID,
 		photoUris: DEFAULT_URIS,
-		thumbnailUri: DEFAULT_THUMBNAIL_URI,
 		timestamp: DEFAULT_TIMESTAMP,
 		processed: false,
 		location: DEFAULT_LOCATION
@@ -36,7 +34,6 @@ describe('tRPC Router', () => {
 
 	const DEFAULT_API_INPUT: PhotoArrayInput = {
 		photoUris: DEFAULT_URI_LIST,
-		thumbnailUri: DEFAULT_THUMBNAIL_URI,
 		timestamp: DEFAULT_TIMESTAMP,
 		processed: false,
 		location: DEFAULT_LOCATION
@@ -45,7 +42,6 @@ describe('tRPC Router', () => {
 	const DEFAULT_API_RESPONSE: PhotoArray = {
 		photoArrayId: DEFAULT_PHOTO_ARRAY_ID,
 		photoUris: DEFAULT_URI_LIST,
-		thumbnailUri: DEFAULT_THUMBNAIL_URI,
 		timestamp: DEFAULT_TIMESTAMP,
 		processed: false,
 		location: DEFAULT_LOCATION
@@ -53,7 +49,6 @@ describe('tRPC Router', () => {
 
 	const DEFAULT_DB_INPUT: DbTypes.PhotoArrayInput = {
 		photoUris: DEFAULT_URIS,
-		thumbnailUri: DEFAULT_THUMBNAIL_URI,
 		timestamp: DEFAULT_TIMESTAMP,
 		processed: false,
 		location: DEFAULT_LOCATION

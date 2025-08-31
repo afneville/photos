@@ -31,11 +31,9 @@ describe('PhotoGalleryService', () => {
 	const DEFAULT_TIMESTAMP = '2024-08-24T10:00:00.000Z';
 	const DEFAULT_LOCATION = 'Dublin, Ireland';
 	const DEFAULT_URIS = new Set(['uri1', 'uri2']);
-	const DEFAULT_THUMBNAIL_URI = 'thumbnail.jpg';
 
 	const DEFAULT_INPUT: PhotoArrayInput = {
 		photoUris: DEFAULT_URIS,
-		thumbnailUri: DEFAULT_THUMBNAIL_URI,
 		timestamp: DEFAULT_TIMESTAMP,
 		processed: false,
 		location: DEFAULT_LOCATION

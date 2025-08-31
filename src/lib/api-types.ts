@@ -16,7 +16,6 @@ export const TRPC_ERROR_MESSAGES = {
 export interface PhotoArray {
 	photoArrayId: string;
 	photoUris: string[];
-	thumbnailUri: string;
 	timestamp: string;
 	processed: boolean;
 	location: string;
@@ -24,7 +23,6 @@ export interface PhotoArray {
 
 export interface PhotoArrayInput {
 	photoUris: string[];
-	thumbnailUri: string;
 	timestamp: string;
 	processed: boolean;
 	location: string;
@@ -32,7 +30,6 @@ export interface PhotoArrayInput {
 
 export interface PhotoArrayUpdate {
 	photoUris?: string[];
-	thumbnailUri?: string;
 	processed?: boolean;
 	location?: string;
 }
@@ -40,7 +37,6 @@ export interface PhotoArrayUpdate {
 // Zod schemas
 export const photoArrayInputSchema = z.object({
 	photoUris: z.array(z.string()),
-	thumbnailUri: z.string(),
 	timestamp: z.string(),
 	processed: z.boolean(),
 	location: z.string()
@@ -48,7 +44,6 @@ export const photoArrayInputSchema = z.object({
 
 export const photoArrayUpdateSchema = z.object({
 	photoUris: z.array(z.string()).optional(),
-	thumbnailUri: z.string().optional(),
 	processed: z.boolean().optional(),
 	location: z.string().optional()
 });
