@@ -29,14 +29,13 @@ describe('tRPC Router', () => {
 		photoArrayId: DEFAULT_PHOTO_ARRAY_ID,
 		photoUris: DEFAULT_URIS,
 		timestamp: DEFAULT_TIMESTAMP,
-		processed: false,
+		processedCount: 0,
 		location: DEFAULT_LOCATION
 	};
 
 	const DEFAULT_API_INPUT: PhotoArrayInput = {
 		photoCount: DEFAULT_PHOTO_COUNT,
 		timestamp: DEFAULT_TIMESTAMP,
-		processed: false,
 		location: DEFAULT_LOCATION
 	};
 
@@ -44,14 +43,13 @@ describe('tRPC Router', () => {
 		photoArrayId: DEFAULT_PHOTO_ARRAY_ID,
 		photoUris: DEFAULT_URI_LIST,
 		timestamp: DEFAULT_TIMESTAMP,
-		processed: false,
+		processedCount: 0,
 		location: DEFAULT_LOCATION
 	};
 
 	const DEFAULT_DB_INPUT: DbTypes.PhotoArrayInput = {
 		photoCount: DEFAULT_PHOTO_COUNT,
 		timestamp: DEFAULT_TIMESTAMP,
-		processed: false,
 		location: DEFAULT_LOCATION
 	};
 

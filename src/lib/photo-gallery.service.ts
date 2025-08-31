@@ -95,7 +95,7 @@ export class PhotoGalleryService {
 				photoArrayId,
 				photoUris,
 				timestamp: inputItem.timestamp,
-				processed: inputItem.processed,
+				processedCount: 0,
 				location: inputItem.location
 			};
 
@@ -153,7 +153,7 @@ export class PhotoGalleryService {
 				!item.photoArrayId ||
 				!item.photoUris ||
 				!item.timestamp ||
-				item.processed === undefined ||
+				item.processedCount === undefined ||
 				!item.location
 			) {
 				throw new PhotoGalleryServiceError(`Invalid photo array item for ${photoArrayId}`);
@@ -185,10 +185,10 @@ export class PhotoGalleryService {
 				expressionAttributeValues[':photoUris'] = updates.photoUris;
 			}
 
-			if (updates.processed !== undefined) {
-				updateExpressions.push('#processed = :processed');
-				expressionAttributeNames['#processed'] = 'processed';
-				expressionAttributeValues[':processed'] = updates.processed;
+			if (updates.processedCount !== undefined) {
+				updateExpressions.push('#processedCount = :processedCount');
+				expressionAttributeNames['#processedCount'] = 'processedCount';
+				expressionAttributeValues[':processedCount'] = updates.processedCount;
 			}
 
 			if (updates.location !== undefined) {

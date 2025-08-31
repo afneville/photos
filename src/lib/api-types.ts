@@ -17,14 +17,13 @@ export interface PhotoArray {
 	photoArrayId: string;
 	photoUris: string[];
 	timestamp: string;
-	processed: boolean;
+	processedCount: number;
 	location: string;
 }
 
 export interface PhotoArrayInput {
 	photoCount: number;
 	timestamp: string;
-	processed: boolean;
 	location: string;
 }
 
@@ -35,21 +34,19 @@ export interface PhotoArrayCreationResponse {
 
 export interface PhotoArrayUpdate {
 	photoUris?: string[];
-	processed?: boolean;
+	processedCount?: number;
 	location?: string;
 }
 
-// Zod schemas
 export const photoArrayInputSchema = z.object({
 	photoCount: z.number().min(1).max(20),
 	timestamp: z.string(),
-	processed: z.boolean(),
 	location: z.string()
 });
 
 export const photoArrayUpdateSchema = z.object({
 	photoUris: z.array(z.string()).optional(),
-	processed: z.boolean().optional(),
+	processedCount: z.number().optional(),
 	location: z.string().optional()
 });
 
@@ -100,4 +97,3 @@ export function toDbUpdateType(apiUpdate: PhotoArrayUpdate): DbTypes.PhotoArrayU
 		photoUris: apiUpdate.photoUris ? new Set(apiUpdate.photoUris) : undefined
 	};
 }
-

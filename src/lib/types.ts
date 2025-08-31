@@ -3,14 +3,13 @@ export interface PhotoArray {
 	photoArrayId: string;
 	photoUris: Set<string>;
 	timestamp: string;
-	processed: boolean;
+	processedCount: number;
 	location: string;
 }
 
 export interface PhotoArrayInput {
 	photoCount: number;
 	timestamp: string;
-	processed: boolean;
 	location: string;
 }
 
@@ -21,7 +20,7 @@ export interface PhotoArrayCreationResponse {
 
 export interface PhotoArrayUpdate {
 	photoUris?: Set<string>;
-	processed?: boolean;
+	processedCount?: number;
 	location?: string;
 }
 

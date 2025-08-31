@@ -44,7 +44,6 @@ describe('PhotoGalleryService', () => {
 	const DEFAULT_INPUT: PhotoArrayInput = {
 		photoCount: DEFAULT_PHOTO_COUNT,
 		timestamp: DEFAULT_TIMESTAMP,
-		processed: false,
 		location: DEFAULT_LOCATION
 	};
 
@@ -84,7 +83,7 @@ describe('PhotoGalleryService', () => {
 			expect(created.photoArrayId).toBeDefined();
 			expect(created.photoUris.size).toBe(input.photoCount);
 			expect(created.timestamp).toBe(input.timestamp);
-			expect(created.processed).toBe(false);
+			expect(created.processedCount).toBe(0);
 			expect(created.location).toBe(input.location);
 			expect(response.presignedUrls).toHaveLength(input.photoCount);
 
@@ -113,10 +112,10 @@ describe('PhotoGalleryService', () => {
 			const created = response.photoArray;
 
 			const updated = await service.updateItem(TEST_PARTITION_KEY, created.photoArrayId, {
-				processed: true,
+				processedCount: 5,
 				location: 'Birmingham, UK'
 			});
-			expect(updated.processed).toBe(true);
+			expect(updated.processedCount).toBe(5);
 			expect(updated.location).toBe('Birmingham, UK');
 			expect(updated.photoUris).toEqual(created.photoUris);
 		});

@@ -1,6 +1,11 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { PhotoGalleryService, PhotoArrayNotFoundError, PhotoGalleryServiceError, PhotoArrayValidationError } from './photo-gallery.service.js';
+import {
+	PhotoGalleryService,
+	PhotoArrayNotFoundError,
+	PhotoGalleryServiceError,
+	PhotoArrayValidationError
+} from './photo-gallery.service.js';
 import { env } from '$env/dynamic/private';
 import type { PhotoArray, PhotoArrayCreationResponse } from './api-types.js';
 import type { IPhotoGalleryService } from './types.js';
