@@ -21,8 +21,15 @@ export interface PhotoArray {
 	location: string;
 }
 
+export interface ThumbnailCoordinates {
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+}
+
 export interface PhotoArrayInput {
-	photoCount: number;
+	thumbnailCoordinates: ThumbnailCoordinates[];
 	timestamp: string;
 	location: string;
 }
@@ -38,8 +45,15 @@ export interface PhotoArrayUpdate {
 	location?: string;
 }
 
+const thumbnailCoordinatesSchema = z.object({
+	x: z.number(),
+	y: z.number(),
+	w: z.number(),
+	h: z.number()
+});
+
 export const photoArrayInputSchema = z.object({
-	photoCount: z.number().min(1).max(20),
+	thumbnailCoordinates: z.array(thumbnailCoordinatesSchema).min(1),
 	timestamp: z.string(),
 	location: z.string()
 });

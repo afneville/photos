@@ -21,7 +21,10 @@ describe('tRPC Router', () => {
 	const DEFAULT_TIMESTAMP = '2023-01-01T00:00:00Z';
 	const DEFAULT_LOCATION = 'test-location';
 	const DEFAULT_URIS = new Set(['uri1', 'uri2']);
-	const DEFAULT_PHOTO_COUNT = 2;
+	const DEFAULT_THUMBNAIL_COORDINATES = [
+		{ x: 10, y: 20, w: 100, h: 150 },
+		{ x: 50, y: 80, w: 200, h: 300 }
+	];
 	const TEST_GALLERY_ID = 'test-gallery';
 
 	const DEFAULT_DB_PHOTO_ARRAY: DbTypes.PhotoArray = {
@@ -34,7 +37,7 @@ describe('tRPC Router', () => {
 	};
 
 	const DEFAULT_API_INPUT: PhotoArrayInput = {
-		photoCount: DEFAULT_PHOTO_COUNT,
+		thumbnailCoordinates: DEFAULT_THUMBNAIL_COORDINATES,
 		timestamp: DEFAULT_TIMESTAMP,
 		location: DEFAULT_LOCATION
 	};
@@ -48,7 +51,7 @@ describe('tRPC Router', () => {
 	};
 
 	const DEFAULT_DB_INPUT: DbTypes.PhotoArrayInput = {
-		photoCount: DEFAULT_PHOTO_COUNT,
+		thumbnailCoordinates: DEFAULT_THUMBNAIL_COORDINATES,
 		timestamp: DEFAULT_TIMESTAMP,
 		location: DEFAULT_LOCATION
 	};

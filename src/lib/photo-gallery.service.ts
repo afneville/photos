@@ -86,7 +86,7 @@ export class PhotoGalleryService {
 			const photoArrayId: string = generateKeyBetween(afterRangeKey, beforeRangeKey);
 
 			const photoUris = new Set<string>();
-			for (let i = 0; i < inputItem.photoCount; i++) {
+			for (const _ of inputItem.thumbnailCoordinates) {
 				photoUris.add(uuidv4());
 			}
 
@@ -107,10 +107,13 @@ export class PhotoGalleryService {
 			);
 
 			const presignedUrls: string[] = [];
-			for (const photoUri of photoUris) {
+			const photoUriArray = Array.from(photoUris);
+			for (let i = 0; i < photoUriArray.length; i++) {
+				const photoUri = photoUriArray[i];
+				const coords = inputItem.thumbnailCoordinates[i];
 				const command = new PutObjectCommand({
 					Bucket: this.stagingBucketName,
-					Key: `${photoGalleryId}/${photoArrayId}/${photoUri}`,
+					Key: `${photoGalleryId}/${photoArrayId}/${photoUri}/${coords.x}:${coords.y}:${coords.w}:${coords.h}`,
 					ContentType: 'image/*'
 				});
 				const url = await getSignedUrl(this.s3Client, command, { expiresIn: 900 });

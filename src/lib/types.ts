@@ -7,8 +7,15 @@ export interface PhotoArray {
 	location: string;
 }
 
+export interface ThumbnailCoordinates {
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+}
+
 export interface PhotoArrayInput {
-	photoCount: number;
+	thumbnailCoordinates: ThumbnailCoordinates[];
 	timestamp: string;
 	location: string;
 }

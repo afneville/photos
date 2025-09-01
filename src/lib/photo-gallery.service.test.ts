@@ -40,9 +40,12 @@ describe('PhotoGalleryService', () => {
 
 	const DEFAULT_TIMESTAMP = '2024-08-24T10:00:00.000Z';
 	const DEFAULT_LOCATION = 'Dublin, Ireland';
-	const DEFAULT_PHOTO_COUNT = 2;
+	const DEFAULT_THUMBNAIL_COORDINATES = [
+		{ x: 10, y: 20, w: 100, h: 150 },
+		{ x: 50, y: 80, w: 200, h: 300 }
+	];
 	const DEFAULT_INPUT: PhotoArrayInput = {
-		photoCount: DEFAULT_PHOTO_COUNT,
+		thumbnailCoordinates: DEFAULT_THUMBNAIL_COORDINATES,
 		timestamp: DEFAULT_TIMESTAMP,
 		location: DEFAULT_LOCATION
 	};
@@ -81,18 +84,22 @@ describe('PhotoGalleryService', () => {
 			const created = response.photoArray;
 			expect(created.photoGalleryId).toBe(TEST_PARTITION_KEY);
 			expect(created.photoArrayId).toBeDefined();
-			expect(created.photoUris.size).toBe(input.photoCount);
+			expect(created.photoUris.size).toBe(input.thumbnailCoordinates.length);
 			expect(created.timestamp).toBe(input.timestamp);
 			expect(created.processedCount).toBe(0);
 			expect(created.location).toBe(input.location);
-			expect(response.presignedUrls).toHaveLength(input.photoCount);
+			expect(response.presignedUrls).toHaveLength(input.thumbnailCoordinates.length);
 
 			const retrieved = await service.getItem(TEST_PARTITION_KEY, created.photoArrayId);
 			expect(retrieved).toEqual(created);
 		});
 
 		it('should generate presigned URLs on create', async () => {
-			const input = { ...DEFAULT_INPUT, photoCount: 3 };
+			const input = { ...DEFAULT_INPUT, thumbnailCoordinates: [
+				{ x: 10, y: 20, w: 100, h: 150 },
+				{ x: 50, y: 80, w: 200, h: 300 },
+				{ x: 75, y: 120, w: 150, h: 200 }
+			] };
 			const mockPresignedUrl = 'https://mock-url.com/test.jpg';
 			(getSignedUrl as vi.Mock).mockResolvedValue(mockPresignedUrl);
 
@@ -101,8 +108,16 @@ describe('PhotoGalleryService', () => {
 			expect(response.presignedUrls).toHaveLength(3);
 			expect(response.presignedUrls.every((url) => url === mockPresignedUrl)).toBe(true);
 			expect(getSignedUrl).toHaveBeenCalledTimes(3);
-			expect(getSignedUrl).toHaveBeenCalledWith(s3Client, expect.any(PutObjectCommand), {
-				expiresIn: 900
+			
+			// Check that S3 keys contain the expected coordinates
+			const mockCalls = (getSignedUrl as vi.Mock).mock.calls;
+			mockCalls.forEach((call, index) => {
+				const putObjectCommand = call[1] as PutObjectCommand;
+				const key = putObjectCommand.input.Key;
+				const expectedCoords = input.thumbnailCoordinates[index];
+				
+				// Key should be: galleryId/photoArrayId/uuid/x:y:w:h
+				expect(key).toMatch(new RegExp(`^${TEST_PARTITION_KEY}/[^/]+/[0-9a-f-]{36}/${expectedCoords.x}:${expectedCoords.y}:${expectedCoords.w}:${expectedCoords.h}$`));
 			});
 		});
 
@@ -158,7 +173,7 @@ describe('PhotoGalleryService', () => {
 		it('should maintain correct order when multiple items are created', async () => {
 			const items: PhotoArray[] = [];
 			for (let i = 0; i < 5; i++) {
-				const input = { ...DEFAULT_INPUT, photoCount: 1 };
+				const input = DEFAULT_INPUT;
 
 				const beforeRangeKey: string | undefined =
 					items.length > 0 ? items[items.length - 1].photoArrayId : undefined;
