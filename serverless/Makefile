@@ -1,5 +1,6 @@
-BUCKET_NAME := $(shell cd ../infra/environments/test && terraform output -raw staging_bucket_name)
-TEST_IMAGE := $(shell ls ../scripts/test_images/ | head -1)
+STAGING_BUCKET_NAME := $(shell cd ../infra/environments/test && terraform output -raw staging_bucket_name)
+PROCESSED_BUCKET_NAME := $(shell cd ../infra/environments/test && terraform output -raw processed_bucket_name)
+TEST_IMAGE := $(shell find ../scripts/test_images -type f | head -1 | sed 's|../scripts/test_images/||')
 VENV := image_processor/venv
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
@@ -14,12 +15,17 @@ build: ## Build SAM application using Docker
 
 generate-events:
 	mkdir -p events
-	sam local generate-event s3 put --bucket $(BUCKET_NAME) --key $(TEST_IMAGE) > events/s3-put-event.json
+	sam local generate-event s3 put --bucket $(STAGING_BUCKET_NAME) --key $(TEST_IMAGE) > events/s3-put-event.json
 
-test-lambda: build events/s3-put-event.json
-	sam local invoke ImageProcessorFunction -e events/s3-put-event.json
+generate-env:
+	mkdir -p .
+	echo '{"ImageProcessorFunction":{"SERVING_BUCKET":"$(PROCESSED_BUCKET_NAME)"}}' > env.json
+
+test-lambda: build events/s3-put-event.json generate-env
+	sam local invoke ImageProcessorFunction -e events/s3-put-event.json --env-vars env.json
 
 clean:
 	rm -rf .aws-sam/
 	rm -rf events/
+	rm -rf env.json
 	rm -rf $(VENV)/

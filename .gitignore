@@ -67,3 +67,4 @@ backend.tfvars
 .env
 .aws-sam
 serverless/events
+serverless/env.json

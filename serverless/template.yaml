@@ -9,5 +9,8 @@ Resources:
       CodeUri: image_processor/
       Handler: app.lambda_handler
       Runtime: python3.12
-      Timeout: 30
-      MemorySize: 512
+      Timeout: 60
+      MemorySize: 1024
+      Environment:
+        Variables:
+          SERVING_BUCKET: photo-gallery-serving-test
