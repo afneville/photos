@@ -3,16 +3,22 @@
 	import { onMount } from 'svelte';
 	import { CaretLeftIcon, CaretRightIcon } from './icons';
 
-	export let photoArray: PhotoArray;
-	export let imageDomain: string;
-	export let galleryId: string;
-
-	let currentIndex = 0;
-	let imageElements: HTMLImageElement[] = [];
+	let {
+		photoArray,
+		imageDomain,
+		galleryId,
+		currentIndex = $bindable(0)
+	}: {
+		photoArray: PhotoArray;
+		imageDomain: string;
+		galleryId: string;
+		currentIndex?: number;
+	} = $props();
+	let imageElements: HTMLImageElement[] = $state([]);
 	let prefetchedImages: Set<string> = new Set();
 
-	$: photoUris = photoArray.photoUris || [];
-	$: hasMultiplePhotos = photoUris.length > 1;
+	const photoUris = $derived(photoArray.photoUris || []);
+	const hasMultiplePhotos = $derived(photoUris.length > 1);
 
 	function getHdImageUrl(photoUri: string): string {
 		return `${imageDomain}/${galleryId}/${photoArray.photoArrayId}/${photoUri}/hd`;
@@ -56,7 +62,7 @@
 		photoUris.forEach(prefetchImage);
 	});
 
-	$: {
+	$effect(() => {
 		// Prefetch adjacent images when current index changes
 		if (hasMultiplePhotos) {
 			const prevIndex = (currentIndex - 1 + photoUris.length) % photoUris.length;
@@ -64,12 +70,12 @@
 			prefetchImage(photoUris[prevIndex]);
 			prefetchImage(photoUris[nextIndex]);
 		}
-	}
+	});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="relative block flex h-full w-full items-center justify-center bg-black">
+<div class="relative flex h-full w-full items-center justify-center bg-black">
 	{#if photoUris.length > 0}
 		<img
 			src={getHdImageUrl(photoUris[currentIndex])}
@@ -84,9 +90,11 @@
 				<button
 					class="absolute top-1/2 left-4 -translate-y-1/2 rounded-full p-3 text-white transition-all duration-200"
 					style="background-color: rgba(0, 0, 0, 0.4);"
-					on:mouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					on:mouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
-					on:click={goToPrevious}
+					onmouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
+					onmouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+					onfocus={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
+					onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+					onclick={goToPrevious}
 					aria-label="Previous image"
 				>
 					<CaretLeftIcon size="24" />
@@ -98,9 +106,11 @@
 				<button
 					class="absolute top-1/2 right-4 -translate-y-1/2 rounded-full p-3 text-white transition-all duration-200"
 					style="background-color: rgba(0, 0, 0, 0.4);"
-					on:mouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					on:mouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
-					on:click={goToNext}
+					onmouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
+					onmouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+					onfocus={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
+					onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+					onclick={goToNext}
 					aria-label="Next image"
 				>
 					<CaretRightIcon size="24" />
@@ -122,17 +132,27 @@
 								style="background-color: {index === currentIndex
 									? 'rgba(255, 255, 255, 0.85)'
 									: 'rgba(255, 255, 255, 0.6)'};"
-								on:mouseover={(e) => {
+								onmouseover={(e) => {
 									if (index !== currentIndex) {
 										e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
 									}
 								}}
-								on:mouseout={(e) => {
+								onmouseout={(e) => {
 									if (index !== currentIndex) {
 										e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
 									}
 								}}
-								on:click={() => goToSlide(index)}
+								onfocus={(e) => {
+									if (index !== currentIndex) {
+										e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+									}
+								}}
+								onblur={(e) => {
+									if (index !== currentIndex) {
+										e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
+									}
+								}}
+								onclick={() => goToSlide(index)}
 								aria-label="Go to image {index + 1}"
 							></button>
 						{/each}

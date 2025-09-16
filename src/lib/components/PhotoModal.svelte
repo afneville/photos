@@ -11,11 +11,25 @@
 		ArrowsOutSimpleIcon
 	} from './icons';
 
-	export let isOpen: boolean = false;
-	export let photoArray: PhotoArray | null = null;
-	export let imageDomain: string;
-	export let galleryId: string;
-	export let onClose: () => void;
+	let {
+		photoArray,
+		imageDomain,
+		galleryId,
+		onClose,
+		onFullScreen
+	}: {
+		photoArray: PhotoArray;
+		imageDomain: string;
+		galleryId: string;
+		onClose: () => void;
+		onFullScreen: (photoIndex: number) => void;
+	} = $props();
+
+	let currentPhotoIndex = $state(0);
+
+	function openFullScreen() {
+		onFullScreen(currentPhotoIndex);
+	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
@@ -26,7 +40,6 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-{#if isOpen && photoArray}
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md"
 		role="dialog"
@@ -43,26 +56,26 @@
 				<div class="flex items-center space-x-2">
 					<button
 						class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
-						on:click={onClose}
+						onclick={onClose}
 					>
 						<CaretLeftIcon size="20" />
 					</button>
 					<button
 						class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
-						on:click={onClose}
+						onclick={onClose}
 					>
 						<CaretRightIcon size="20" />
 					</button>
 					<button
 						class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
-						on:click={onClose}
+						onclick={openFullScreen}
 						aria-label="Full Screen"
 					>
 						<ArrowsOutSimpleIcon size="20" />
 					</button>
 					<button
 						class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
-						on:click={onClose}
+						onclick={onClose}
 						aria-label="Close modal"
 					>
 						<XIcon size="20" />
@@ -71,7 +84,7 @@
 			</div>
 
 			<div class="min-h-0 flex-1 overflow-hidden">
-				<PhotoCarousel {photoArray} {imageDomain} {galleryId} />
+				<PhotoCarousel {photoArray} {imageDomain} {galleryId} bind:currentIndex={currentPhotoIndex} />
 			</div>
 
 			<div class="relative z-10 flex-shrink-0 border-t border-gray-200 bg-white p-4">
@@ -93,4 +106,3 @@
 			</div>
 		</div>
 	</div>
-{/if}
