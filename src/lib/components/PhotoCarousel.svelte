@@ -1,27 +1,28 @@
 <script lang="ts">
 	import type { PhotoArray } from '$lib/api-types';
 	import { onMount } from 'svelte';
+	import { getPhotoContext } from '$lib/contexts/photo-context';
+	import { getImageUrl, getImageSrcSet, ImageQuality } from '$lib/utils/image-utils';
 	import { CaretLeftIcon, CaretRightIcon } from './icons';
 
 	let {
 		photoArray,
-		imageDomain,
-		galleryId,
 		currentIndex = $bindable(0)
 	}: {
 		photoArray: PhotoArray;
-		imageDomain: string;
-		galleryId: string;
 		currentIndex?: number;
 	} = $props();
+
+	const photoContext = getPhotoContext();
+	const { galleryId, imageDomain } = photoContext;
 	let imageElements: HTMLImageElement[] = $state([]);
 	let prefetchedImages: Set<string> = new Set();
 
 	const photoUris = $derived(photoArray.photoUris || []);
 	const hasMultiplePhotos = $derived(photoUris.length > 1);
 
-	function getHdImageUrl(photoUri: string): string {
-		return `${imageDomain}/${galleryId}/${photoArray.photoArrayId}/${photoUri}/hd`;
+	function getCarouselImageSrcSet(photoUri: string): string {
+		return getImageSrcSet(imageDomain, galleryId, photoArray.photoArrayId, photoUri);
 	}
 
 	function goToPrevious() {
@@ -41,11 +42,12 @@
 	}
 
 	function prefetchImage(photoUri: string) {
-		const url = getHdImageUrl(photoUri);
-		if (!prefetchedImages.has(url)) {
+		const srcset = getCarouselImageSrcSet(photoUri);
+		if (!prefetchedImages.has(srcset)) {
 			const img = new Image();
-			img.src = url;
-			prefetchedImages.add(url);
+			img.srcset = srcset;
+			img.sizes = "(max-width: 800px) 80vw, (max-width: 1440px) 80vw, 1152px";
+			prefetchedImages.add(srcset);
 		}
 	}
 
@@ -78,7 +80,8 @@
 <div class="relative flex h-full w-full items-center justify-center bg-black">
 	{#if photoUris.length > 0}
 		<img
-			src={getHdImageUrl(photoUris[currentIndex])}
+			srcset={getCarouselImageSrcSet(photoUris[currentIndex])}
+			sizes="(max-width: 800px) 80vw, (max-width: 1440px) 80vw, 1152px"
 			alt="Photo {currentIndex + 1} of {photoUris.length}"
 			class="max-h-full max-w-full object-contain"
 			bind:this={imageElements[currentIndex]}

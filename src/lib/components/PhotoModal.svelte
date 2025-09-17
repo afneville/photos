@@ -2,6 +2,7 @@
 	import { fade, scale } from 'svelte/transition';
 	import type { PhotoArray } from '$lib/api-types';
 	import PhotoCarousel from './PhotoCarousel.svelte';
+	import { getPhotoContext } from '$lib/contexts/photo-context';
 	import {
 		XIcon,
 		CaretLeftIcon,
@@ -12,23 +13,40 @@
 	} from './icons';
 
 	let {
-		photoArray,
-		imageDomain,
-		galleryId,
+		photoArrayIndex = $bindable(),
+		currentPhotoIndex = $bindable(),
 		onClose,
 		onFullScreen
 	}: {
-		photoArray: PhotoArray;
-		imageDomain: string;
-		galleryId: string;
+		photoArrayIndex: number;
+		currentPhotoIndex: number;
 		onClose: () => void;
 		onFullScreen: (photoIndex: number) => void;
 	} = $props();
 
-	let currentPhotoIndex = $state(0);
+	const photoContext = getPhotoContext();
+	const { photoArrays, galleryId, imageDomain } = photoContext;
+
+	const photoArray = $derived(photoArrays[photoArrayIndex]);
+	const hasPreviousArray = $derived(photoArrayIndex > 0);
+	const hasNextArray = $derived(photoArrayIndex < photoArrays.length - 1);
 
 	function openFullScreen() {
 		onFullScreen(currentPhotoIndex);
+	}
+
+	function goToPreviousArray() {
+		if (hasPreviousArray) {
+			currentPhotoIndex = 0;
+			photoArrayIndex = photoArrayIndex - 1;
+		}
+	}
+
+	function goToNextArray() {
+		if (hasNextArray) {
+			currentPhotoIndex = 0;
+			photoArrayIndex = photoArrayIndex + 1;
+		}
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -55,14 +73,18 @@
 			<div class="flex h-16 flex-shrink-0 items-center justify-end border-b border-gray-200 px-4">
 				<div class="flex items-center space-x-2">
 					<button
-						class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
-						onclick={onClose}
+						class="flex h-10 w-10 items-center justify-center rounded-full {hasPreviousArray ? 'hover:bg-gray-100' : 'text-gray-400 cursor-not-allowed'}"
+						onclick={goToPreviousArray}
+						disabled={!hasPreviousArray}
+						aria-label="Previous array"
 					>
 						<CaretLeftIcon size="20" />
 					</button>
 					<button
-						class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
-						onclick={onClose}
+						class="flex h-10 w-10 items-center justify-center rounded-full {hasNextArray ? 'hover:bg-gray-100' : 'text-gray-400 cursor-not-allowed'}"
+						onclick={goToNextArray}
+						disabled={!hasNextArray}
+						aria-label="Next array"
 					>
 						<CaretRightIcon size="20" />
 					</button>
@@ -84,7 +106,7 @@
 			</div>
 
 			<div class="min-h-0 flex-1 overflow-hidden">
-				<PhotoCarousel {photoArray} {imageDomain} {galleryId} bind:currentIndex={currentPhotoIndex} />
+				<PhotoCarousel {photoArray} bind:currentIndex={currentPhotoIndex} />
 			</div>
 
 			<div class="relative z-10 flex-shrink-0 border-t border-gray-200 bg-white p-4">

@@ -3,24 +3,29 @@
 	import type { PageData } from './$types';
 	import PhotoModal from '$lib/components/PhotoModal.svelte';
 	import FullScreenView from '$lib/components/FullScreenView.svelte';
+	import { setPhotoContext } from '$lib/contexts/photo-context';
+	import { getImageUrl, ImageQuality } from '$lib/utils/image-utils';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
-	let isModalOpen = false;
-	let selectedPhotoArray: PhotoArray | null = null;
-	let isFullScreenOpen = false;
-	let fullScreenArrayIndex = 0;
-	let fullScreenPhotoIndex = 0;
+	let isModalOpen = $state(false);
+	let isFullScreenOpen = $state(false);
+	let currentArrayIndex = $state(0);
+	let currentPhotoIndex = $state(0);
+
+
+	setPhotoContext(data.photoArrays, data.galleryId, data.imageDomain);
 
 	function getThumbnailUrl(photoArray: PhotoArray) {
 		if (photoArray.photoUris && photoArray.photoUris.length > 0) {
-			return `${data.imageDomain}/${data.galleryId}/${photoArray.photoArrayId}/${photoArray.photoUris[0]}/thumbnail`;
+			return getImageUrl(data.imageDomain, data.galleryId, photoArray.photoArrayId, photoArray.photoUris[0], ImageQuality.THUMBNAIL);
 		}
 		return '';
 	}
 
 	function openModal(photoArray: PhotoArray) {
-		selectedPhotoArray = photoArray;
+		const arrayIndex = data.photoArrays.findIndex(pa => pa.photoArrayId === photoArray.photoArrayId);
+		currentArrayIndex = arrayIndex;
 		isModalOpen = true;
 	}
 
@@ -31,14 +36,14 @@
 	}
 
 	function closeModal() {
+		currentPhotoIndex = 0;
 		isModalOpen = false;
-		selectedPhotoArray = null;
 	}
 
 	function openFullScreen(arrayIndex: number, photoIndex: number) {
 		console.log(arrayIndex, photoIndex)
-		fullScreenArrayIndex = arrayIndex;
-		fullScreenPhotoIndex = photoIndex;
+		currentArrayIndex = arrayIndex;
+		currentPhotoIndex = photoIndex;
 		isFullScreenOpen = true;
 	}
 
@@ -75,23 +80,19 @@
 	{/if}
 </div>
 
-{#if isModalOpen && selectedPhotoArray}
+{#if isModalOpen}
 	<PhotoModal
-		photoArray={selectedPhotoArray}
-		imageDomain={data.imageDomain}
-		galleryId={data.galleryId}
+		bind:photoArrayIndex={currentArrayIndex}
+		bind:currentPhotoIndex={currentPhotoIndex}
 		onClose={closeModal}
-		onFullScreen={createFullScreenHandler(data.photoArrays.findIndex(pa => pa.photoArrayId === selectedPhotoArray!.photoArrayId))}
+		onFullScreen={createFullScreenHandler(currentArrayIndex)}
 	/>
 {/if}
 
 {#if isFullScreenOpen}
 	<FullScreenView
-		photoArrays={data.photoArrays}
-		currentArrayIndex={fullScreenArrayIndex}
-		currentPhotoIndex={fullScreenPhotoIndex}
-		imageDomain={data.imageDomain}
-		galleryId={data.galleryId}
+		bind:currentArrayIndex={currentArrayIndex}
+		bind:currentPhotoIndex={currentPhotoIndex}
 		onClose={closeFullScreen}
 	/>
 {/if}

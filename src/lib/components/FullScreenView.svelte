@@ -1,27 +1,27 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import type { PhotoArray } from '$lib/api-types';
+	import { getPhotoContext } from '$lib/contexts/photo-context';
+	import { getImageUrl, getImageSrcSet, ImageQuality } from '$lib/utils/image-utils';
 	import { CaretLeftIcon, CaretRightIcon, XIcon, MapPinIcon, CalendarDotsIcon } from './icons';
 
 	let {
-		photoArrays,
-		currentArrayIndex,
-		currentPhotoIndex,
-		imageDomain,
-		galleryId,
+		currentArrayIndex = $bindable(),
+		currentPhotoIndex = $bindable(),
 		onClose
 	}: {
-		photoArrays: PhotoArray[];
 		currentArrayIndex: number;
 		currentPhotoIndex: number;
-		imageDomain: string;
-		galleryId: string;
 		onClose: () => void;
 	} = $props();
+
+	const photoContext = getPhotoContext();
+	const { photoArrays, galleryId, imageDomain } = photoContext;
 
 	let currentGlobalIndex = $state(0);
 	let controlsVisible = $state(true);
 	let hideTimeout: NodeJS.Timeout;
+	let prefetchedImages: Set<string> = new Set();
 
 	// Flatten all photos into a single navigable list
 	const flatImageList = $derived(() => {
@@ -51,19 +51,73 @@
 
 	const currentImage = $derived(flatImageList()[currentGlobalIndex]);
 
-	function getHdImageUrl(photoArray: PhotoArray, photoUri: string): string {
-		return `${imageDomain}/${galleryId}/${photoArray.photoArrayId}/${photoUri}/hd`;
+	function getFullScreenImageSrcSet(photoArray: PhotoArray, photoUri: string): string {
+		return getImageSrcSet(imageDomain, galleryId, photoArray.photoArrayId, photoUri);
+	}
+
+	function prefetchImage(photoArray: PhotoArray, photoUri: string) {
+		const srcset = getFullScreenImageSrcSet(photoArray, photoUri);
+		if (!prefetchedImages.has(srcset)) {
+			const img = new Image();
+			img.srcset = srcset;
+			img.sizes = "100vw";
+			prefetchedImages.add(srcset);
+		}
+	}
+
+	function prefetchAdjacentImages() {
+		const list = flatImageList();
+		if (list.length === 0) return;
+
+		// Prefetch 2 images to each side of current image
+		for (let offset = -2; offset <= 2; offset++) {
+			if (offset === 0) continue; // Skip current image
+			
+			const index = currentGlobalIndex + offset;
+			if (index >= 0 && index < list.length) {
+				const item = list[index];
+				prefetchImage(item.photoArray, item.photoUri);
+			}
+		}
 	}
 
 	function goToPrevious() {
 		if (currentGlobalIndex > 0) {
 			currentGlobalIndex--;
+			const newImage = flatImageList()[currentGlobalIndex];
+			currentArrayIndex = newImage.arrayIndex;
+			currentPhotoIndex = newImage.photoIndex;
 		}
 	}
 
 	function goToNext() {
 		if (currentGlobalIndex < flatImageList().length - 1) {
 			currentGlobalIndex++;
+			const newImage = flatImageList()[currentGlobalIndex];
+			currentArrayIndex = newImage.arrayIndex;
+			currentPhotoIndex = newImage.photoIndex;
+		}
+	}
+
+	function goToPreviousArray() {
+		if (currentArrayIndex > 0) {
+			const newArrayIndex = currentArrayIndex - 1;
+			currentArrayIndex = newArrayIndex;
+			currentPhotoIndex = 0;
+			currentGlobalIndex = flatImageList().findIndex(
+				(item) => item.arrayIndex === newArrayIndex && item.photoIndex === 0
+			);
+		}
+	}
+
+	function goToNextArray() {
+		if (currentArrayIndex < photoArrays.length - 1) {
+			const newArrayIndex = currentArrayIndex + 1;
+			currentArrayIndex = newArrayIndex;
+			currentPhotoIndex = 0;
+			currentGlobalIndex = flatImageList().findIndex(
+				(item) => item.arrayIndex === newArrayIndex && item.photoIndex === 0
+			);
 		}
 	}
 
@@ -97,6 +151,12 @@
 		}
 	}
 
+	function handleFullscreenChange() {
+		if (!document.fullscreenElement) {
+			onClose();
+		}
+	}
+
 	// Enter/exit browser fullscreen
 	function enterFullscreen() {
 		const elem = document.documentElement;
@@ -111,14 +171,22 @@
 		}
 	}
 
+	// Prefetch adjacent images when current index changes
+	$effect(() => {
+		prefetchAdjacentImages();
+	});
+
 	// Initialize auto-hide timer and enter fullscreen
 	$effect(() => {
 		showControlsTemporarily();
 		enterFullscreen();
 		
+		document.addEventListener('fullscreenchange', handleFullscreenChange);
+		
 		return () => {
 			clearTimeout(hideTimeout);
 			exitFullscreen();
+			document.removeEventListener('fullscreenchange', handleFullscreenChange);
 		};
 	});
 </script>
@@ -136,7 +204,8 @@
 		onclick={handleClick}
 	>
 		<img
-			src={getHdImageUrl(currentImage.photoArray, currentImage.photoUri)}
+			srcset={getFullScreenImageSrcSet(currentImage.photoArray, currentImage.photoUri)}
+			sizes="100vw"
 			alt="Photo {currentGlobalIndex + 1} / {flatImageList().length}"
 			class="max-h-full max-w-full object-contain"
 		/>
@@ -144,11 +213,13 @@
 		<!-- Top bar with gradient -->
 		{#if controlsVisible}
 			<div
-				class="absolute top-0 left-0 right-0 z-10 p-6 text-white transition-opacity duration-300"
+				class="absolute top-0 left-0 right-0 z-10 p-6 text-white"
 				style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);"
+				in:fade={{ duration: 300 }}
+				out:fade={{ duration: 300 }}
 			>
-				<div class="flex items-center justify-between">
-					<div class="flex items-center gap-6">
+				<div class="flex items-center justify-end">
+					<div class="flex items-center gap-6 mr-4">
 						<span class="flex items-center gap-2">
 							<MapPinIcon size="20" />
 							{currentImage.photoArray.location || 'Unknown location'}
@@ -162,12 +233,7 @@
 						</span>
 					</div>
 					<button
-						class="rounded-full p-3 transition-all duration-200"
-						style="background-color: rgba(0, 0, 0, 0.4);"
-						onmouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-						onmouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
-						onfocus={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-						onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+						class="rounded-full p-3 text-white transition-all duration-200"
 						onclick={(e) => {
 							e.stopPropagation();
 							onClose();
@@ -195,6 +261,8 @@
 						goToPrevious();
 					}}
 					aria-label="Previous image"
+					in:fade={{ duration: 300 }}
+					out:fade={{ duration: 300 }}
 				>
 					<CaretLeftIcon size="24" />
 				</button>
@@ -213,6 +281,8 @@
 						goToNext();
 					}}
 					aria-label="Next image"
+					in:fade={{ duration: 300 }}
+					out:fade={{ duration: 300 }}
 				>
 					<CaretRightIcon size="24" />
 				</button>
