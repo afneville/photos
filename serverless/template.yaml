@@ -1,16 +1,25 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Minimal SAM template for local Lambda development
+Description: SAM template for local Lambda development and container building
 
 Resources:
   ImageProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: image_processor/
-      Handler: app.lambda_handler
-      Runtime: python3.12
+      PackageType: Image
       Timeout: 60
       MemorySize: 1024
       Environment:
         Variables:
           SERVING_BUCKET: photo-gallery-serving-test
+          DYNAMODB_TABLE_NAME: PhotoGallery-test
+      Policies:
+        - S3ReadPolicy:
+            BucketName: photo-gallery-staging-test
+        - S3WritePolicy:
+            BucketName: photo-gallery-serving-test
+        - DynamoDBWritePolicy:
+            TableName: PhotoGallery-test
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./image_processor

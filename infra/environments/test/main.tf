@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -25,16 +29,21 @@ provider "aws" {
   }
 }
 
+provider "docker" {
+  # Docker provider will be configured by the module
+}
+
 module "photo_gallery" {
   source = "../../modules/photo-gallery"
   providers = {
     aws.n-virginia = aws.n-virginia
   }
 
-  cloudfront_enabled    = false
-  metadata_table_name   = "PhotoGallery-test"
-  staging_bucket_name   = "photo-gallery-staging-test"
-  processed_bucket_name = "photo-gallery-serving-test"
+  cloudfront_enabled      = false
+  metadata_table_name     = "PhotoGallery-test"
+  staging_bucket_name     = "photo-gallery-staging-test"
+  processed_bucket_name   = "photo-gallery-serving-test"
+  cors_allowed_origins    = ["*"]
   tags = {
     Environment = "test"
     Project     = "photo-gallery"
@@ -55,5 +64,13 @@ output "processed_bucket_name" {
 
 output "image_serving_endpoint" {
   value = module.photo_gallery.processed_images_endpoint
+}
+
+output "ecr_repository_url" {
+  value = module.photo_gallery.ecr_repository_url
+}
+
+output "lambda_function_name" {
+  value = module.photo_gallery.lambda_function_name
 }
 

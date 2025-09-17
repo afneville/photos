@@ -17,3 +17,13 @@ output "processed_images_endpoint" {
   description = "Endpoint for accessing processed images"
   value       = var.cloudfront_enabled ? "https://${var.domain_names[0]}" : "http://${module.bucket_hosting[0].website_endpoint}"
 }
+
+output "ecr_repository_url" {
+  description = "URL of the ECR repository for Lambda container images"
+  value       = aws_ecr_repository.image_processor_repo.repository_url
+}
+
+output "lambda_function_name" {
+  description = "Name of the Lambda function"
+  value       = aws_lambda_function.image_processor.function_name
+}

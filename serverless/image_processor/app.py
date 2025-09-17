@@ -5,11 +5,13 @@ import os
 import boto3
 import urllib.parse
 import json
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 s3_client = boto3.client("s3")
+dynamodb_client = boto3.client("dynamodb")
 
 
 def parse_s3_key(key):
@@ -39,6 +41,42 @@ def parse_s3_key(key):
     except (ValueError, IndexError) as e:
         logger.error(f"Failed to parse S3 key '{key}': {str(e)}")
         return None
+
+
+def increment_processed_count(photo_gallery_id, photo_array_id):
+    try:
+        table_name = os.environ.get("DYNAMODB_TABLE_NAME")
+        if not table_name:
+            logger.error("DYNAMODB_TABLE_NAME environment variable not set")
+            return False
+
+        response = dynamodb_client.update_item(
+            TableName=table_name,
+            Key={
+                "photoGalleryId": {"S": photo_gallery_id},
+                "photoArrayId": {"S": photo_array_id},
+            },
+            UpdateExpression="ADD processedCount :increment",
+            ExpressionAttributeValues={":increment": {"N": "1"}},
+            ReturnValues="UPDATED_NEW",
+        )
+
+        new_count = (
+            response.get("Attributes", {}).get("processedCount", {}).get("N", "0")
+        )
+        logger.info(
+            f"Incremented processedCount to {new_count} for {photo_gallery_id}/{photo_array_id}"
+        )
+        return True
+
+    except ClientError as e:
+        logger.error(
+            f"Failed to increment processedCount for {photo_gallery_id}/{photo_array_id}: {str(e)}"
+        )
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error incrementing processedCount: {str(e)}")
+        return False
 
 
 def strip_exif_metadata(img):
@@ -206,21 +244,45 @@ def lambda_handler(event, context):
                 logger.error(f"Failed to process image: {decoded_key}")
                 continue
 
+            all_uploads_successful = True
+            uploaded_files = []
+
             for size_name, image_buffer in processed_images.items():
                 processed_key = f"{parsed_key['photo_gallery_id']}/{parsed_key['photo_array_id']}/{parsed_key['photo_uri']}/{size_name}"
 
-                s3_client.put_object(
-                    Bucket=serving_bucket,
-                    Key=processed_key,
-                    Body=image_buffer.getvalue(),
-                    ContentType="image/jpeg",
+                try:
+                    s3_client.put_object(
+                        Bucket=serving_bucket,
+                        Key=processed_key,
+                        Body=image_buffer.getvalue(),
+                        ContentType="image/jpeg",
+                    )
+                    uploaded_files.append(processed_key)
+                    logger.info(f"Saved {size_name}: {processed_key}")
+                except Exception as e:
+                    logger.error(
+                        f"Failed to upload {size_name} ({processed_key}): {str(e)}"
+                    )
+                    all_uploads_successful = False
+                    break
+
+            if all_uploads_successful:
+                increment_success = increment_processed_count(
+                    parsed_key["photo_gallery_id"], parsed_key["photo_array_id"]
                 )
 
-                logger.info(f"Saved {size_name}: {processed_key}")
-
-            logger.info(
-                f"Successfully processed {len(processed_images)} versions of {decoded_key}"
-            )
+                if increment_success:
+                    logger.info(
+                        f"Successfully processed and uploaded {len(processed_images)} versions of {decoded_key} and updated processedCount"
+                    )
+                else:
+                    logger.warning(
+                        f"Successfully processed and uploaded {len(processed_images)} versions of {decoded_key} but failed to update processedCount"
+                    )
+            else:
+                logger.error(
+                    f"Failed to upload all versions of {decoded_key}. processedCount not incremented. Uploaded files: {uploaded_files}"
+                )
 
         return {
             "statusCode": 200,

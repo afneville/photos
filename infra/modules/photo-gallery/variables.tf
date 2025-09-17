@@ -43,6 +43,12 @@ variable "domain_names" {
   default     = []
 }
 
+variable "cors_allowed_origins" {
+  description = "List of allowed origins for S3 CORS configuration"
+  type        = list(string)
+  default     = ["*"]
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
