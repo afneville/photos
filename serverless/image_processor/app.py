@@ -11,7 +11,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 s3_client = boto3.client("s3")
-dynamodb_client = boto3.client("dynamodb")
+dynamodb_resource = boto3.resource("dynamodb")
 
 
 def parse_s3_key(key):
@@ -50,20 +50,19 @@ def increment_processed_count(photo_gallery_id, photo_array_id):
             logger.error("DYNAMODB_TABLE_NAME environment variable not set")
             return False
 
-        response = dynamodb_client.update_item(
-            TableName=table_name,
+        table = dynamodb_resource.Table(table_name)
+        
+        response = table.update_item(
             Key={
-                "photoGalleryId": {"S": photo_gallery_id},
-                "photoArrayId": {"S": photo_array_id},
+                "photoGalleryId": photo_gallery_id,
+                "photoArrayId": photo_array_id
             },
             UpdateExpression="ADD processedCount :increment",
-            ExpressionAttributeValues={":increment": {"N": "1"}},
-            ReturnValues="UPDATED_NEW",
+            ExpressionAttributeValues={":increment": 1},
+            ReturnValues="UPDATED_NEW"
         )
 
-        new_count = (
-            response.get("Attributes", {}).get("processedCount", {}).get("N", "0")
-        )
+        new_count = response.get("Attributes", {}).get("processedCount", 0)
         logger.info(
             f"Incremented processedCount to {new_count} for {photo_gallery_id}/{photo_array_id}"
         )

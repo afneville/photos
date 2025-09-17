@@ -95,11 +95,14 @@ describe('PhotoGalleryService', () => {
 		});
 
 		it('should generate presigned URLs on create', async () => {
-			const input = { ...DEFAULT_INPUT, thumbnailCoordinates: [
-				{ x: 10, y: 20, w: 100, h: 150 },
-				{ x: 50, y: 80, w: 200, h: 300 },
-				{ x: 75, y: 120, w: 150, h: 200 }
-			] };
+			const input = {
+				...DEFAULT_INPUT,
+				thumbnailCoordinates: [
+					{ x: 10, y: 20, w: 100, h: 150 },
+					{ x: 50, y: 80, w: 200, h: 300 },
+					{ x: 75, y: 120, w: 150, h: 200 }
+				]
+			};
 			const mockPresignedUrl = 'https://mock-url.com/test.jpg';
 			(getSignedUrl as vi.Mock).mockResolvedValue(mockPresignedUrl);
 
@@ -108,16 +111,20 @@ describe('PhotoGalleryService', () => {
 			expect(response.presignedUrls).toHaveLength(3);
 			expect(response.presignedUrls.every((url) => url === mockPresignedUrl)).toBe(true);
 			expect(getSignedUrl).toHaveBeenCalledTimes(3);
-			
+
 			// Check that S3 keys contain the expected coordinates
 			const mockCalls = (getSignedUrl as vi.Mock).mock.calls;
 			mockCalls.forEach((call, index) => {
 				const putObjectCommand = call[1] as PutObjectCommand;
 				const key = putObjectCommand.input.Key;
 				const expectedCoords = input.thumbnailCoordinates[index];
-				
+
 				// Key should be: galleryId/photoArrayId/uuid/x:y:w:h
-				expect(key).toMatch(new RegExp(`^${TEST_PARTITION_KEY}/[^/]+/[0-9a-f-]{36}/${expectedCoords.x}:${expectedCoords.y}:${expectedCoords.w}:${expectedCoords.h}$`));
+				expect(key).toMatch(
+					new RegExp(
+						`^${TEST_PARTITION_KEY}/[^/]+/[0-9a-f-]{36}/${expectedCoords.x}:${expectedCoords.y}:${expectedCoords.w}:${expectedCoords.h}$`
+					)
+				);
 			});
 		});
 

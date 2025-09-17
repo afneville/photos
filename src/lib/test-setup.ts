@@ -13,7 +13,7 @@ export const TEST_PARTITION_KEY = 'test-gallery';
 export const TEST_AWS_REGION = 'eu-west-2';
 
 const docker = new Docker();
-let container: any;
+let container: Docker.Container | null = null;
 let testDynamoDbDocClient: DynamoDBDocumentClient | null = null;
 
 export function getTestDynamoDbDocClient(): DynamoDBDocumentClient {
@@ -30,7 +30,6 @@ export function getTestDynamoDbDocClient(): DynamoDBDocumentClient {
 	}
 	return testDynamoDbDocClient;
 }
-
 
 async function waitForDynamoDB(maxAttempts = 30, intervalMs = 100) {
 	const client = getTestDynamoDbDocClient();
@@ -63,7 +62,7 @@ export async function stopContainer() {
 	if (container) {
 		try {
 			await container.kill();
-		} catch (error) {
+		} catch {
 			// continue on error
 		}
 		container = null;
@@ -98,5 +97,7 @@ export async function teardownTestTable(): Promise<void> {
 				TableName: TEST_DYNAMODB_TABLE
 			})
 		);
-	} catch (error) {}
+	} catch {
+		// Ignore cleanup errors
+	}
 }

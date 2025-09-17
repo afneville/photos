@@ -86,7 +86,7 @@ export class PhotoGalleryService {
 			const photoArrayId: string = generateKeyBetween(afterRangeKey, beforeRangeKey);
 
 			const photoUris = new Set<string>();
-			for (const _ of inputItem.thumbnailCoordinates) {
+			for (let i = 0; i < inputItem.thumbnailCoordinates.length; i++) {
 				photoUris.add(uuidv4());
 			}
 
@@ -180,7 +180,7 @@ export class PhotoGalleryService {
 		try {
 			const updateExpressions: string[] = [];
 			const expressionAttributeNames: Record<string, string> = {};
-			const expressionAttributeValues: Record<string, any> = {};
+			const expressionAttributeValues: Record<string, unknown> = {};
 
 			if (updates.photoUris !== undefined) {
 				updateExpressions.push('#photoUris = :photoUris');

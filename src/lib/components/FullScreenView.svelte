@@ -2,7 +2,7 @@
 	import { fade } from 'svelte/transition';
 	import type { PhotoArray } from '$lib/api-types';
 	import { getPhotoContext } from '$lib/contexts/photo-context';
-	import { getImageUrl, getImageSrcSet, ImageQuality } from '$lib/utils/image-utils';
+	import { getImageSrcSet } from '$lib/utils/image-utils';
 	import { CaretLeftIcon, CaretRightIcon, XIcon, MapPinIcon, CalendarDotsIcon } from './icons';
 
 	let {
@@ -21,7 +21,8 @@
 	let currentGlobalIndex = $state(0);
 	let controlsVisible = $state(true);
 	let hideTimeout: NodeJS.Timeout;
-	let prefetchedImages: Set<string> = new Set();
+	import { SvelteSet } from 'svelte/reactivity';
+	let prefetchedImages = new SvelteSet<string>();
 
 	// Flatten all photos into a single navigable list
 	const flatImageList = $derived(() => {
@@ -60,7 +61,7 @@
 		if (!prefetchedImages.has(srcset)) {
 			const img = new Image();
 			img.srcset = srcset;
-			img.sizes = "100vw";
+			img.sizes = '100vw';
 			prefetchedImages.add(srcset);
 		}
 	}
@@ -72,7 +73,7 @@
 		// Prefetch 2 images to each side of current image
 		for (let offset = -2; offset <= 2; offset++) {
 			if (offset === 0) continue; // Skip current image
-			
+
 			const index = currentGlobalIndex + offset;
 			if (index >= 0 && index < list.length) {
 				const item = list[index];
@@ -99,27 +100,27 @@
 		}
 	}
 
-	function goToPreviousArray() {
-		if (currentArrayIndex > 0) {
-			const newArrayIndex = currentArrayIndex - 1;
-			currentArrayIndex = newArrayIndex;
-			currentPhotoIndex = 0;
-			currentGlobalIndex = flatImageList().findIndex(
-				(item) => item.arrayIndex === newArrayIndex && item.photoIndex === 0
-			);
-		}
-	}
+	// function goToPreviousArray() {
+	// 	if (currentArrayIndex > 0) {
+	// 		const newArrayIndex = currentArrayIndex - 1;
+	// 		currentArrayIndex = newArrayIndex;
+	// 		currentPhotoIndex = 0;
+	// 		currentGlobalIndex = flatImageList().findIndex(
+	// 			(item) => item.arrayIndex === newArrayIndex && item.photoIndex === 0
+	// 		);
+	// 	}
+	// }
 
-	function goToNextArray() {
-		if (currentArrayIndex < photoArrays.length - 1) {
-			const newArrayIndex = currentArrayIndex + 1;
-			currentArrayIndex = newArrayIndex;
-			currentPhotoIndex = 0;
-			currentGlobalIndex = flatImageList().findIndex(
-				(item) => item.arrayIndex === newArrayIndex && item.photoIndex === 0
-			);
-		}
-	}
+	// function goToNextArray() {
+	// 	if (currentArrayIndex < photoArrays.length - 1) {
+	// 		const newArrayIndex = currentArrayIndex + 1;
+	// 		currentArrayIndex = newArrayIndex;
+	// 		currentPhotoIndex = 0;
+	// 		currentGlobalIndex = flatImageList().findIndex(
+	// 			(item) => item.arrayIndex === newArrayIndex && item.photoIndex === 0
+	// 		);
+	// 	}
+	// }
 
 	function showControlsTemporarily() {
 		controlsVisible = true;
@@ -180,9 +181,9 @@
 	$effect(() => {
 		showControlsTemporarily();
 		enterFullscreen();
-		
+
 		document.addEventListener('fullscreenchange', handleFullscreenChange);
-		
+
 		return () => {
 			clearTimeout(hideTimeout);
 			exitFullscreen();
@@ -213,13 +214,13 @@
 		<!-- Top bar with gradient -->
 		{#if controlsVisible}
 			<div
-				class="absolute top-0 left-0 right-0 z-10 p-6 text-white"
+				class="absolute top-0 right-0 left-0 z-10 p-6 text-white"
 				style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);"
 				in:fade={{ duration: 300 }}
 				out:fade={{ duration: 300 }}
 			>
 				<div class="flex items-center justify-end">
-					<div class="flex items-center gap-6 mr-4">
+					<div class="mr-4 flex items-center gap-6">
 						<span class="flex items-center gap-2">
 							<MapPinIcon size="20" />
 							{currentImage.photoArray.location || 'Unknown location'}

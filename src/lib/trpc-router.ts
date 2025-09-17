@@ -163,8 +163,7 @@ export const appRouter = router({
 		.input(getAllItemsSchema)
 		.query(
 			async ({
-				ctx,
-				input
+				ctx
 			}: {
 				ctx: Context;
 				input: z.infer<typeof getAllItemsSchema>;

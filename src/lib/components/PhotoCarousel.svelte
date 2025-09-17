@@ -2,7 +2,7 @@
 	import type { PhotoArray } from '$lib/api-types';
 	import { onMount } from 'svelte';
 	import { getPhotoContext } from '$lib/contexts/photo-context';
-	import { getImageUrl, getImageSrcSet, ImageQuality } from '$lib/utils/image-utils';
+	import { getImageSrcSet } from '$lib/utils/image-utils';
 	import { CaretLeftIcon, CaretRightIcon } from './icons';
 
 	let {
@@ -16,7 +16,8 @@
 	const photoContext = getPhotoContext();
 	const { galleryId, imageDomain } = photoContext;
 	let imageElements: HTMLImageElement[] = $state([]);
-	let prefetchedImages: Set<string> = new Set();
+	import { SvelteSet } from 'svelte/reactivity';
+	let prefetchedImages = new SvelteSet<string>();
 
 	const photoUris = $derived(photoArray.photoUris || []);
 	const hasMultiplePhotos = $derived(photoUris.length > 1);
@@ -46,7 +47,7 @@
 		if (!prefetchedImages.has(srcset)) {
 			const img = new Image();
 			img.srcset = srcset;
-			img.sizes = "(max-width: 800px) 80vw, (max-width: 1440px) 80vw, 1152px";
+			img.sizes = '(max-width: 800px) 80vw, (max-width: 1440px) 80vw, 1152px';
 			prefetchedImages.add(srcset);
 		}
 	}
@@ -127,7 +128,7 @@
 					style="background-color: rgba(0, 0, 0, 0.4); height: 2.5rem;"
 				>
 					<div class="flex items-center space-x-2">
-						{#each photoUris as _, index}
+						{#each photoUris as photoUri, index (photoUri)}
 							<button
 								class="rounded-full transition-all duration-200 {index === currentIndex
 									? 'h-4 w-4 shadow-lg'
@@ -169,4 +170,3 @@
 		</div>
 	{/if}
 </div>
-

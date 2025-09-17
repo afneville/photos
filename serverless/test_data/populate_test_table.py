@@ -24,7 +24,7 @@ def populate_table():
         {
             "photoGalleryId": PARTITION_KEY,
             "photoArrayId": "a0",
-            "photoUris": ["9d79417f-6c92-4884-b293-ee6098eb8fda"],
+            "photoUris": {"9d79417f-6c92-4884-b293-ee6098eb8fda"},
             "timestamp": "2024-08-24T10:00:00.000Z",
             "processedCount": 0,
             "location": "Dublin, Ireland",
@@ -32,11 +32,11 @@ def populate_table():
         {
             "photoGalleryId": PARTITION_KEY,
             "photoArrayId": "a1",
-            "photoUris": [
+            "photoUris": {
                 "12345678-1234-5678-9abc-123456789012",
                 "12345678-1234-5678-9abc-123456789013",
                 "12345678-1234-5678-9abc-123456789014",
-            ],
+            },
             "timestamp": "2024-08-25T14:30:00.000Z",
             "processedCount": 0,
             "location": "London, UK",
@@ -44,10 +44,10 @@ def populate_table():
         {
             "photoGalleryId": PARTITION_KEY,
             "photoArrayId": "a2",
-            "photoUris": [
+            "photoUris": {
                 "87654321-4321-8765-dcba-987654321098",
                 "87654321-4321-8765-dcba-987654321099",
-            ],
+            },
             "timestamp": "2024-08-26T09:15:00.000Z",
             "processedCount": 0,
             "location": "Birmingham, UK",

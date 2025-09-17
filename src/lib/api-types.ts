@@ -92,6 +92,7 @@ export const moveItemSchema = z.object({
 });
 
 export function toApiType(dbItem: DbTypes.PhotoArray): PhotoArray {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const { photoGalleryId, ...apiItem } = dbItem;
 	return {
 		...apiItem,

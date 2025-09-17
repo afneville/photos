@@ -13,18 +13,25 @@
 	let currentArrayIndex = $state(0);
 	let currentPhotoIndex = $state(0);
 
-
 	setPhotoContext(data.photoArrays, data.galleryId, data.imageDomain);
 
 	function getThumbnailUrl(photoArray: PhotoArray) {
 		if (photoArray.photoUris && photoArray.photoUris.length > 0) {
-			return getImageUrl(data.imageDomain, data.galleryId, photoArray.photoArrayId, photoArray.photoUris[0], ImageQuality.THUMBNAIL);
+			return getImageUrl(
+				data.imageDomain,
+				data.galleryId,
+				photoArray.photoArrayId,
+				photoArray.photoUris[0],
+				ImageQuality.THUMBNAIL
+			);
 		}
 		return '';
 	}
 
 	function openModal(photoArray: PhotoArray) {
-		const arrayIndex = data.photoArrays.findIndex(pa => pa.photoArrayId === photoArray.photoArrayId);
+		const arrayIndex = data.photoArrays.findIndex(
+			(pa) => pa.photoArrayId === photoArray.photoArrayId
+		);
 		currentArrayIndex = arrayIndex;
 		isModalOpen = true;
 	}
@@ -41,7 +48,7 @@
 	}
 
 	function openFullScreen(arrayIndex: number, photoIndex: number) {
-		console.log(arrayIndex, photoIndex)
+		console.log(arrayIndex, photoIndex);
 		currentArrayIndex = arrayIndex;
 		currentPhotoIndex = photoIndex;
 		isFullScreenOpen = true;
@@ -57,7 +64,7 @@
 		<div
 			class="auto-grid grid w-full max-w-[calc(5*300px+4*1rem)] grid-cols-3 justify-center gap-4"
 		>
-			{#each data.photoArrays as photo, index}
+			{#each data.photoArrays as photo (photo.photoArrayId)}
 				<div
 					class="aspect-square cursor-pointer overflow-hidden border-2 border-gray-400"
 					onclick={() => openModal(photo)}
@@ -83,18 +90,14 @@
 {#if isModalOpen}
 	<PhotoModal
 		bind:photoArrayIndex={currentArrayIndex}
-		bind:currentPhotoIndex={currentPhotoIndex}
+		bind:currentPhotoIndex
 		onClose={closeModal}
 		onFullScreen={createFullScreenHandler(currentArrayIndex)}
 	/>
 {/if}
 
 {#if isFullScreenOpen}
-	<FullScreenView
-		bind:currentArrayIndex={currentArrayIndex}
-		bind:currentPhotoIndex={currentPhotoIndex}
-		onClose={closeFullScreen}
-	/>
+	<FullScreenView bind:currentArrayIndex bind:currentPhotoIndex onClose={closeFullScreen} />
 {/if}
 
 <style>
