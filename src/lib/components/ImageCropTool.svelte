@@ -97,23 +97,54 @@
 			return null;
 		}
 
-		// Calculate scale factors between displayed and natural image
-		const scaleX = imageDimensions.width / containerWidth;
-		const scaleY = imageDimensions.height / containerHeight;
+		// Calculate how the image is actually displayed (object-contain behavior)
+		const imageAspect = imageDimensions.width / imageDimensions.height;
+		const containerAspect = containerWidth / containerHeight;
+		
+		let displayedWidth: number;
+		let displayedHeight: number;
+		let offsetX: number = 0;
+		let offsetY: number = 0;
 
-		// Convert crop coordinates to actual pixels
-		const pixelX = Math.round(cropX * scaleX);
-		const pixelY = Math.round(cropY * scaleY);
+		if (imageAspect > containerAspect) {
+			// Image is wider - fits by width
+			displayedWidth = containerWidth;
+			displayedHeight = containerWidth / imageAspect;
+			offsetY = (containerHeight - displayedHeight) / 2;
+		} else {
+			// Image is taller - fits by height
+			displayedHeight = containerHeight;
+			displayedWidth = containerHeight * imageAspect;
+			offsetX = (containerWidth - displayedWidth) / 2;
+		}
 
-		// Since the crop is always square, use the average scale to ensure w === h
-		const avgScale = (scaleX + scaleY) / 2;
-		const pixelSize = Math.round(cropSize * avgScale);
+		// Calculate scale factor from displayed to natural image size
+		const scale = imageDimensions.width / displayedWidth;
+
+		// Adjust crop coordinates for image offset and scale to natural size
+		const adjustedCropX = cropX - offsetX;
+		const adjustedCropY = cropY - offsetY;
+
+		// Ensure coordinates are within the displayed image bounds
+		const clampedX = Math.max(0, Math.min(displayedWidth - cropSize, adjustedCropX));
+		const clampedY = Math.max(0, Math.min(displayedHeight - cropSize, adjustedCropY));
+		const clampedSize = Math.min(cropSize, displayedWidth, displayedHeight);
+
+		// Convert to actual pixel coordinates
+		const pixelX = Math.round(clampedX * scale);
+		const pixelY = Math.round(clampedY * scale);
+		const pixelSize = Math.round(clampedSize * scale);
+
+		// Ensure coordinates don't exceed image bounds
+		const finalX = Math.max(0, Math.min(imageDimensions.width - pixelSize, pixelX));
+		const finalY = Math.max(0, Math.min(imageDimensions.height - pixelSize, pixelY));
+		const finalSize = Math.min(pixelSize, imageDimensions.width - finalX, imageDimensions.height - finalY);
 
 		return {
-			x: pixelX,
-			y: pixelY,
-			w: pixelSize,
-			h: pixelSize
+			x: finalX,
+			y: finalY,
+			w: finalSize,
+			h: finalSize
 		};
 	}
 

@@ -17,7 +17,7 @@ import type { IPhotoGalleryService } from './types.js';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // Mock the auth module
-vi.mock('./auth.js', () => ({
+vi.mock('./auth.service.js', () => ({
 	isAuthenticated: vi.fn()
 }));
 

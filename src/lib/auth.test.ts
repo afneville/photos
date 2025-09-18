@@ -17,7 +17,7 @@ vi.mock('$env/static/private', () => ({
 	COGNITO_CLIENT_ID: 'test-client-id'
 }));
 
-import { AuthService } from './auth.js';
+import { AuthService } from './auth.service.js';
 
 describe('AuthService', () => {
 	const createMockRequestEvent = (authToken?: string): RequestEvent =>

@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { COGNITO_CLIENT_ID, AWS_REGION } from '$env/static/private';
 import type { Actions, PageServerLoad } from './$types';
-import { AuthService } from '$lib/auth';
+import { AuthService } from '$lib/auth.service';
 import { env } from '$env/dynamic/private';
 
 import {

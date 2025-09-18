@@ -3,6 +3,7 @@
 	import type { PageData } from './$types';
 	import PhotoModal from '$lib/components/PhotoModal.svelte';
 	import FullScreenView from '$lib/components/FullScreenView.svelte';
+	import Heading from '$lib/components/Heading.svelte';
 	import { setPhotoContext } from '$lib/contexts/photo-context';
 	import { getImageUrl, ImageQuality } from '$lib/utils/image-utils';
 
@@ -58,7 +59,9 @@
 	}
 </script>
 
-<div class="mx-auto flex min-h-screen w-full items-start justify-center p-8">
+<div class="mx-auto flex min-h-screen w-full flex-col items-center justify-start p-8">
+	<Heading />
+	<div class="flex w-full items-start justify-center">
 	{#if data.photoArrays.length}
 		<div
 			class="auto-grid grid w-full max-w-[calc(5*300px+4*1rem)] grid-cols-3 justify-center gap-4"
@@ -84,6 +87,7 @@
 	{:else}
 		<p class="mt-8 text-center text-xl text-gray-600">No photos found.</p>
 	{/if}
+	</div>
 </div>
 
 {#if isModalOpen}

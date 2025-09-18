@@ -1,6 +1,6 @@
 import { createServerCaller } from '$lib/trpc-caller';
 import { IMAGE_DOMAIN, PHOTO_GALLERY_ID } from '$env/static/private';
-import { AuthService } from '$lib/auth';
+import { AuthService } from '$lib/auth.service';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 

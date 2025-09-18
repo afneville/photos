@@ -22,7 +22,7 @@ import {
 	TRPC_ERROR_CODES,
 	TRPC_ERROR_MESSAGES
 } from './api-types.js';
-import { AuthService } from './auth.js';
+import { AuthService } from './auth.service.js';
 import type { RequestEvent } from '@sveltejs/kit';
 
 interface Context {
@@ -39,7 +39,6 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 export const createCallerFactory = t.createCallerFactory;
 
-// Middleware that ensures user is authenticated
 const authMiddleware = t.middleware(async ({ ctx, next }) => {
 	if (!ctx.token) {
 		throw new TRPCError({
@@ -61,7 +60,6 @@ const authMiddleware = t.middleware(async ({ ctx, next }) => {
 	});
 });
 
-// Protected procedure that requires authentication
 export const protectedProcedure = publicProcedure.use(authMiddleware);
 
 function handleServiceError(error: unknown): never {
@@ -94,10 +92,7 @@ export async function createContext(event: RequestEvent): Promise<Context> {
 		throw new Error('PHOTO_GALLERY_ID environment variable is required');
 	}
 
-	// Create auth service instance
 	const authService = new AuthService();
-
-	// Extract the auth token (verification happens in auth middleware)
 	const token = authService.getTokenFromCookies(event) || undefined;
 
 	return {
