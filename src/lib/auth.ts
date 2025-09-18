@@ -1,5 +1,5 @@
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
-import { COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, AWS_REGION } from '$env/static/private';
+import { COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID } from '$env/static/private';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // Create the verifier outside of request handling to reuse
@@ -25,13 +25,13 @@ export function getTokenFromCookies(event: RequestEvent): string | null {
 
 export async function requireAuth(event: RequestEvent): Promise<void> {
 	const token = getTokenFromCookies(event);
-	
+
 	if (!token) {
 		throw new Error('No authentication token found');
 	}
-	
+
 	const authenticated = await isAuthenticated(token);
-	
+
 	if (!authenticated) {
 		throw new Error('Invalid authentication token');
 	}

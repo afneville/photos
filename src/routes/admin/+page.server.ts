@@ -9,13 +9,13 @@ export const load: PageServerLoad = async (event) => {
 		await requireAuth(event);
 		const caller = await createServerCaller(event);
 		const photoArrays = await caller.getAllItems({});
-		
+
 		return {
 			photoArrays,
 			imageDomain: IMAGE_DOMAIN,
 			galleryId: PHOTO_GALLERY_ID
 		};
-	} catch (error) {
+	} catch {
 		// Redirect to login if not authenticated
 		throw redirect(302, '/admin/login');
 	}

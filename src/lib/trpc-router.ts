@@ -28,7 +28,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 interface Context {
 	photoGalleryService: IPhotoGalleryService;
 	photoGalleryId: string;
-	isAuthenticated: boolean;
+	token?: string;
 	event: RequestEvent;
 }
 
@@ -36,15 +36,25 @@ const t = initTRPC.context<Context>().create();
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
+export const createCallerFactory = t.createCallerFactory;
 
 // Middleware that ensures user is authenticated
-const authMiddleware = t.middleware(({ ctx, next }) => {
-	if (!ctx.isAuthenticated) {
+const authMiddleware = t.middleware(async ({ ctx, next }) => {
+	if (!ctx.token) {
 		throw new TRPCError({
 			code: 'UNAUTHORIZED',
 			message: 'Authentication required'
 		});
 	}
+
+	const authenticated = await isAuthenticated(ctx.token);
+	if (!authenticated) {
+		throw new TRPCError({
+			code: 'UNAUTHORIZED',
+			message: 'Authentication required'
+		});
+	}
+
 	return next({
 		ctx
 	});
@@ -83,20 +93,17 @@ export async function createContext(event: RequestEvent): Promise<Context> {
 		throw new Error('PHOTO_GALLERY_ID environment variable is required');
 	}
 
-	// Try to get and verify the auth token
-	const token = event.cookies.get('auth_token');
-	const authenticated = token ? await isAuthenticated(token) : false;
+	const token = event.cookies.get('auth_token') || undefined;
 
 	return {
 		photoGalleryService: new PhotoGalleryService(),
 		photoGalleryId: env.PHOTO_GALLERY_ID,
-		isAuthenticated: authenticated,
+		token,
 		event
 	};
 }
 
 export const appRouter = router({
-	// Public endpoint for viewing photos (no auth required)
 	getPublicItems: publicProcedure
 		.input(getAllItemsSchema)
 		.query(
@@ -108,7 +115,9 @@ export const appRouter = router({
 			}): Promise<PhotoArray[]> => {
 				try {
 					const dbItems = await ctx.photoGalleryService.getAllItems(ctx.photoGalleryId);
-					return dbItems.map(toApiType);
+					return dbItems
+						.map(toApiType)
+						.filter((photoArray) => photoArray.processedCount == photoArray.photoUris.length);
 				} catch (error) {
 					handleServiceError(error);
 				}

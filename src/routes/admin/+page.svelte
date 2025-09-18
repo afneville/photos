@@ -68,7 +68,7 @@
 					</svg>
 					Create New Array
 				</button>
-				<a 
+				<a
 					href="/admin/logout"
 					class="flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
 				>
