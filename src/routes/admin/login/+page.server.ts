@@ -1,9 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { COGNITO_CLIENT_ID, AWS_REGION } from '$env/static/private';
 import type { Actions, PageServerLoad } from './$types';
-import { getTokenFromCookies, isAuthenticated } from '$lib/auth';
+import { AuthService } from '$lib/auth';
+import { env } from '$env/dynamic/private';
 
-// AWS SDK for authentication
 import {
 	CognitoIdentityProviderClient,
 	InitiateAuthCommand,
@@ -15,10 +15,10 @@ const cognitoClient = new CognitoIdentityProviderClient({
 });
 
 export const load: PageServerLoad = async (event) => {
-	// If already authenticated, redirect to admin
-	const token = getTokenFromCookies(event);
+	const authService = new AuthService();
+	const token = authService.getTokenFromCookies(event);
 	if (token) {
-		const authenticated = await isAuthenticated(token);
+		const authenticated = await authService.isAuthenticated(token);
 		if (authenticated) {
 			throw redirect(302, '/admin');
 		}
@@ -53,16 +53,14 @@ export const actions: Actions = {
 				return fail(401, { error: 'Authentication failed' });
 			}
 
-			// Set httpOnly cookie with the access token
 			cookies.set('auth_token', response.AuthenticationResult.AccessToken, {
 				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
+				secure: env.ENVIRONMENT === 'production',
 				sameSite: 'strict',
-				maxAge: 60 * 60 * 24, // 24 hours
+				maxAge: 60 * 60 * 24,
 				path: '/'
 			});
 
-			// Return success instead of redirect for form enhancement
 			return { success: true };
 		} catch (error) {
 			console.error('Login error:', error);

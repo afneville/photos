@@ -22,12 +22,13 @@ import {
 	TRPC_ERROR_CODES,
 	TRPC_ERROR_MESSAGES
 } from './api-types.js';
-import { isAuthenticated } from './auth.js';
+import { AuthService } from './auth.js';
 import type { RequestEvent } from '@sveltejs/kit';
 
 interface Context {
 	photoGalleryService: IPhotoGalleryService;
 	photoGalleryId: string;
+	authService: AuthService;
 	token?: string;
 	event: RequestEvent;
 }
@@ -47,7 +48,7 @@ const authMiddleware = t.middleware(async ({ ctx, next }) => {
 		});
 	}
 
-	const authenticated = await isAuthenticated(ctx.token);
+	const authenticated = await ctx.authService.isAuthenticated(ctx.token);
 	if (!authenticated) {
 		throw new TRPCError({
 			code: 'UNAUTHORIZED',
@@ -93,11 +94,16 @@ export async function createContext(event: RequestEvent): Promise<Context> {
 		throw new Error('PHOTO_GALLERY_ID environment variable is required');
 	}
 
-	const token = event.cookies.get('auth_token') || undefined;
+	// Create auth service instance
+	const authService = new AuthService();
+
+	// Extract the auth token (verification happens in auth middleware)
+	const token = authService.getTokenFromCookies(event) || undefined;
 
 	return {
 		photoGalleryService: new PhotoGalleryService(),
 		photoGalleryId: env.PHOTO_GALLERY_ID,
+		authService,
 		token,
 		event
 	};

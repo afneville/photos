@@ -1,18 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 
-// Simple mocks that don't interfere with imports
-vi.mock('aws-jwt-verify');
-vi.mock('$env/static/private', () => ({
-	COGNITO_USER_POOL_ID: 'test-user-pool-id',
-	COGNITO_CLIENT_ID: 'test-client-id',
-	AWS_REGION: 'eu-west-2'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JwtVerifier = any;
+
+vi.mock('aws-jwt-verify', () => ({
+	CognitoJwtVerifier: {
+		create: vi.fn(() => ({
+			verify: vi.fn()
+		}))
+	}
 }));
 
-// Import the module we want to test
-import { getTokenFromCookies } from './auth.js';
+vi.mock('$env/static/private', () => ({
+	COGNITO_USER_POOL_ID: 'us-west-2_XXXXXXXXX',
+	COGNITO_CLIENT_ID: 'test-client-id'
+}));
 
-describe('Auth Module - Unit Tests', () => {
+import { AuthService } from './auth.js';
+
+describe('AuthService', () => {
 	const createMockRequestEvent = (authToken?: string): RequestEvent =>
 		({
 			cookies: {
@@ -22,198 +29,99 @@ describe('Auth Module - Unit Tests', () => {
 			}
 		}) as unknown as RequestEvent;
 
-	beforeEach(() => {
-		vi.clearAllMocks();
-	});
+	describe('with dependency injection', () => {
+		let mockVerifier: JwtVerifier;
+		let authService: AuthService;
 
-	describe('getTokenFromCookies', () => {
-		it('should return token from auth_token cookie', () => {
-			const event = createMockRequestEvent('test-token-123');
+		beforeEach(() => {
+			mockVerifier = {
+				verify: vi.fn()
+			};
 
-			const result = getTokenFromCookies(event);
-
-			expect(result).toBe('test-token-123');
-			expect(event.cookies.get).toHaveBeenCalledWith('auth_token');
+			authService = new AuthService(mockVerifier);
+			vi.clearAllMocks();
 		});
 
-		it('should return null when no auth_token cookie', () => {
-			const event = createMockRequestEvent();
+		describe('getTokenFromCookies', () => {
+			it('should return token from auth_token cookie', () => {
+				const event = createMockRequestEvent('test-token-123');
 
-			const result = getTokenFromCookies(event);
+				const result = authService.getTokenFromCookies(event);
 
-			expect(result).toBeNull();
-			expect(event.cookies.get).toHaveBeenCalledWith('auth_token');
-		});
-
-		it('should return null when auth_token cookie is empty', () => {
-			const event = createMockRequestEvent('');
-
-			const result = getTokenFromCookies(event);
-
-			expect(result).toBeNull();
-		});
-
-		it('should handle cookie access errors', () => {
-			const event = {
-				cookies: {
-					get: vi.fn().mockImplementation(() => {
-						throw new Error('Cookie access failed');
-					})
-				}
-			} as unknown as RequestEvent;
-
-			expect(() => getTokenFromCookies(event)).toThrow('Cookie access failed');
-		});
-
-		it('should handle various token formats safely', () => {
-			const testCases = [
-				'valid.jwt.token',
-				'bearer-token-format',
-				'123456789',
-				'special!@#$%^&*()chars',
-				'<script>alert("xss")</script>', // XSS attempt
-				'../../etc/passwd', // Path traversal attempt
-				'very'.repeat(1000) // Very long string
-			];
-
-			for (const tokenValue of testCases) {
-				const event = createMockRequestEvent(tokenValue);
-				const result = getTokenFromCookies(event);
-				// Should return the input as-is without processing/executing it
-				expect(result).toBe(tokenValue);
-			}
-		});
-
-		it('should not modify or process token values', () => {
-			const originalToken = 'original.token.value';
-			const event = createMockRequestEvent(originalToken);
-
-			const result = getTokenFromCookies(event);
-
-			// Token should be returned exactly as received
-			expect(result).toBe(originalToken);
-			expect(result).toEqual(originalToken);
-		});
-	});
-
-	describe('Auth error message consistency', () => {
-		it('should use consistent error message constants', () => {
-			const expectedErrorMessages = [
-				'No authentication token found',
-				'Invalid authentication token'
-			];
-
-			// These are the error messages our auth system should use
-			expect(expectedErrorMessages).toContain('No authentication token found');
-			expect(expectedErrorMessages).toContain('Invalid authentication token');
-		});
-	});
-
-	describe('Security considerations', () => {
-		it('should not expose sensitive data in token extraction', () => {
-			const sensitiveToken = 'secret-token-123';
-			const event = createMockRequestEvent(sensitiveToken);
-
-			const result = getTokenFromCookies(event);
-
-			// The function should return the token, but not log it or expose it elsewhere
-			expect(result).toBe(sensitiveToken);
-			// If there were console.log calls, we'd check they don't contain the token
-		});
-
-		it('should handle null/undefined cookies object gracefully', () => {
-			const eventWithNoCookies = {
-				cookies: null
-			} as unknown as RequestEvent;
-
-			expect(() => getTokenFromCookies(eventWithNoCookies)).toThrow();
-		});
-	});
-
-	describe('Cookie extraction edge cases', () => {
-		it('should only check for auth_token cookie', () => {
-			const mockGet = vi.fn().mockImplementation((name: string) => {
-				if (name === 'auth_token') return 'correct-token';
-				if (name === 'other_cookie') return 'other-value';
-				return null;
+				expect(result).toBe('test-token-123');
+				expect(event.cookies.get).toHaveBeenCalledWith('auth_token');
 			});
 
-			const event = {
-				cookies: { get: mockGet }
-			} as unknown as RequestEvent;
+			it('should return null when no auth_token cookie', () => {
+				const event = createMockRequestEvent();
 
-			const result = getTokenFromCookies(event);
+				const result = authService.getTokenFromCookies(event);
 
-			expect(result).toBe('correct-token');
-			expect(mockGet).toHaveBeenCalledWith('auth_token');
-			expect(mockGet).toHaveBeenCalledTimes(1);
+				expect(result).toBeNull();
+				expect(event.cookies.get).toHaveBeenCalledWith('auth_token');
+			});
 		});
 
-		it('should handle cookies.get returning undefined', () => {
-			const event = {
-				cookies: {
-					get: vi.fn().mockReturnValue(undefined)
-				}
-			} as unknown as RequestEvent;
+		describe('isAuthenticated', () => {
+			it('should return true for valid JWT token', async () => {
+				const mockVerify = vi.mocked(mockVerifier.verify);
+				mockVerify.mockResolvedValue({});
 
-			const result = getTokenFromCookies(event);
+				const result = await authService.isAuthenticated('valid.jwt.token');
 
-			expect(result).toBeNull(); // Our function converts undefined to null
+				expect(result).toBe(true);
+				expect(mockVerify).toHaveBeenCalledWith('valid.jwt.token');
+			});
+
+			it('should return false for invalid JWT token', async () => {
+				const mockVerify = vi.mocked(mockVerifier.verify);
+				mockVerify.mockRejectedValue(new Error('Invalid token'));
+
+				const result = await authService.isAuthenticated('invalid.token');
+
+				expect(result).toBe(false);
+				expect(mockVerify).toHaveBeenCalledWith('invalid.token');
+			});
 		});
 
-		it('should handle cookies.get returning various falsy values', () => {
-			const falsyValues = [null, undefined, '', 0, false];
+		describe('requireAuth', () => {
+			it('should pass for valid authentication', async () => {
+				const mockVerify = vi.mocked(mockVerifier.verify);
+				mockVerify.mockResolvedValue({});
+				const event = createMockRequestEvent('valid.jwt.token');
 
-			for (const falsyValue of falsyValues) {
-				const event = {
-					cookies: {
-						get: vi.fn().mockReturnValue(falsyValue)
-					}
-				} as unknown as RequestEvent;
+				await expect(authService.requireAuth(event)).resolves.not.toThrow();
+				expect(mockVerify).toHaveBeenCalledWith('valid.jwt.token');
+			});
 
-				const result = getTokenFromCookies(event);
+			it('should throw error when no token is present', async () => {
+				const event = createMockRequestEvent(); // No token
 
-				if (
-					falsyValue === undefined ||
-					falsyValue === '' ||
-					falsyValue === 0 ||
-					falsyValue === false
-				) {
-					expect(result).toBeNull();
-				} else {
-					expect(result).toBe(falsyValue);
-				}
-			}
-		});
-	});
+				await expect(authService.requireAuth(event)).rejects.toThrow(
+					'No authentication token found'
+				);
+				expect(mockVerifier.verify).not.toHaveBeenCalled();
+			});
 
-	describe('Function signature and contract', () => {
-		it('should accept RequestEvent parameter', () => {
-			const event = createMockRequestEvent('test');
+			it('should throw error when token is empty string', async () => {
+				const event = createMockRequestEvent(''); // Empty token
 
-			// Should not throw when called with proper RequestEvent
-			expect(() => getTokenFromCookies(event)).not.toThrow();
-		});
+				await expect(authService.requireAuth(event)).rejects.toThrow(
+					'No authentication token found'
+				);
+				expect(mockVerifier.verify).not.toHaveBeenCalled();
+			});
 
-		it('should return string or null', () => {
-			const testCases = [
-				{ input: 'token', expectedType: 'string' },
-				{ input: '', expectedType: 'object' }, // empty string becomes null
-				{ input: null, expectedType: 'object' }, // null is typeof 'object'
-				{ input: undefined, expectedType: 'object' } // null (converted from undefined)
-			];
+			it('should throw error for invalid token', async () => {
+				const mockVerify = vi.mocked(mockVerifier.verify);
+				mockVerify.mockRejectedValue(new Error('Invalid token'));
+				const event = createMockRequestEvent('invalid.token');
 
-			for (const testCase of testCases) {
-				const event = createMockRequestEvent(testCase.input as string);
-				const result = getTokenFromCookies(event);
-
-				if (testCase.input === undefined || testCase.input === '' || testCase.input === null) {
-					expect(result).toBeNull();
-					expect(typeof result).toBe('object');
-				} else {
-					expect(typeof result).toBe(testCase.expectedType);
-				}
-			}
+				await expect(authService.requireAuth(event)).rejects.toThrow(
+					'Invalid authentication token'
+				);
+				expect(mockVerify).toHaveBeenCalledWith('invalid.token');
+			});
 		});
 	});
 });

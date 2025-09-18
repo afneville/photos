@@ -11,9 +11,6 @@
 	<div class="w-full max-w-md space-y-8">
 		<div>
 			<h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Admin Login</h2>
-			<p class="mt-2 text-center text-sm text-gray-600">
-				Sign in to access the photo gallery administration
-			</p>
 		</div>
 		<form
 			class="mt-8 space-y-6"
@@ -23,7 +20,6 @@
 				return async ({ result, update }) => {
 					loading = false;
 					if (result.type === 'success' && result.data?.success) {
-						// Redirect client-side on success
 						window.location.href = '/admin';
 						return;
 					}
@@ -68,7 +64,7 @@
 				<button
 					type="submit"
 					disabled={loading}
-					class="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+					class="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{loading ? 'Signing in...' : 'Sign in'}
 				</button>

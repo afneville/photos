@@ -89,9 +89,16 @@ describe('tRPC Router with Authentication', () => {
 		mockPhotoGalleryService: IPhotoGalleryService,
 		token?: string
 	) => {
+		const mockAuthService = {
+			isAuthenticated: mockIsAuthenticated,
+			getTokenFromCookies: vi.fn().mockReturnValue(token || null),
+			requireAuth: vi.fn()
+		};
+
 		return createCaller({
 			photoGalleryService: mockPhotoGalleryService,
 			photoGalleryId: TEST_GALLERY_ID,
+			authService: mockAuthService,
 			token,
 			event: createMockRequestEvent(token)
 		});
