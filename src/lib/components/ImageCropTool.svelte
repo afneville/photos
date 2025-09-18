@@ -34,11 +34,11 @@
 		const rect = containerRef.getBoundingClientRect();
 		containerWidth = rect.width;
 		containerHeight = rect.height;
-		
+
 		// Store actual image dimensions
 		imageDimensions.width = imageRef.naturalWidth;
 		imageDimensions.height = imageRef.naturalHeight;
-		
+
 		imageLoaded = true;
 
 		// Log actual image dimensions for debugging
@@ -106,7 +106,7 @@
 		// Convert crop coordinates to actual pixels
 		const pixelX = Math.round(cropX * scaleX);
 		const pixelY = Math.round(cropY * scaleY);
-		
+
 		// Since the crop is always square, use the average scale to ensure w === h
 		const avgScale = (scaleX + scaleY) / 2;
 		const pixelSize = Math.round(cropSize * avgScale);

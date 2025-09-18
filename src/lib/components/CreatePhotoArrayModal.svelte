@@ -30,7 +30,7 @@
 	}> = $state([]);
 	let selectedImageId = $state<string | null>(null);
 	let isSubmitting = $state(false);
-	let imageCropToolRef: any;
+	let imageCropToolRef: HTMLElement;
 
 	// Generate default timestamp (1st of the month at noon)
 	function getTimestamp() {
@@ -90,7 +90,7 @@
 		const image = uploadedImages.find((img) => img.id === id);
 		if (image) {
 			image.cropCoords = coords;
-			
+
 			// Also store pixel coordinates if available
 			if (imageCropToolRef) {
 				const pixelCoords = imageCropToolRef.getPixelCoordinates();
@@ -142,16 +142,14 @@
 		}
 
 		// Get the alphabetically first key from existing images
-		const sortedKeys = photoArrays
-			.map((array) => array.photoArrayId)
-			.sort();
+		const sortedKeys = photoArrays.map((array) => array.photoArrayId).sort();
 
 		return sortedKeys[0];
 	}
 
 	// Get pixel coordinates for an image
 	function getPixelCoordsForImage(imageId: string) {
-		const image = uploadedImages.find(img => img.id === imageId);
+		const image = uploadedImages.find((img) => img.id === imageId);
 		if (!image) return null;
 
 		// First priority: use stored pixel coordinates if available
@@ -169,7 +167,7 @@
 			}
 		}
 
-		// Fallback: convert percentage to normalized coordinates (0-1) 
+		// Fallback: convert percentage to normalized coordinates (0-1)
 		console.log(`Image ${imageId} using fallback percentage coordinates`);
 		return {
 			x: image.cropCoords.x / 100,
@@ -186,9 +184,9 @@
 
 		try {
 			// Convert crop coordinates to the format expected by the API
-			const thumbnailCoordinates = uploadedImages.map((image) =>
-				getPixelCoordsForImage(image.id)
-			).filter(coords => coords !== null);
+			const thumbnailCoordinates = uploadedImages
+				.map((image) => getPixelCoordsForImage(image.id))
+				.filter((coords) => coords !== null);
 
 			// Get the alphabetically first key from existing arrays to place new array before it
 			const beforeRangeKey = getFirstExistingKey();

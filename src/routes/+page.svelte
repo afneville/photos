@@ -93,6 +93,7 @@
 		bind:currentPhotoIndex
 		onClose={closeModal}
 		onFullScreen={createFullScreenHandler(currentArrayIndex)}
+		{isFullScreenOpen}
 	/>
 {/if}
 

@@ -7,10 +7,12 @@
 
 	let {
 		photoArray,
-		currentIndex = $bindable(0)
+		currentIndex = $bindable(0),
+		handleKeys = true
 	}: {
 		photoArray: PhotoArray;
 		currentIndex?: number;
+		handleKeys?: boolean;
 	} = $props();
 
 	const photoContext = getPhotoContext();
@@ -22,24 +24,43 @@
 	const photoUris = $derived(photoArray.photoUris || []);
 	const hasMultiplePhotos = $derived(photoUris.length > 1);
 
+	let isAnimating = $state(false);
+	let loadedImages = new SvelteSet<number>();
+
 	function getCarouselImageSrcSet(photoUri: string): string {
 		return getImageSrcSet(imageDomain, galleryId, photoArray.photoArrayId, photoUri);
 	}
 
-	function goToPrevious() {
-		if (hasMultiplePhotos && currentIndex > 0) {
-			currentIndex = currentIndex - 1;
+	async function goToPrevious() {
+		if (hasMultiplePhotos && currentIndex > 0 && !isAnimating) {
+			isAnimating = true;
+			const newIndex = currentIndex - 1;
+			loadedImages.add(newIndex);
+			await ensureImageReady(photoUris[newIndex]);
+			currentIndex = newIndex;
+			setTimeout(() => (isAnimating = false), 300);
 		}
 	}
 
-	function goToNext() {
-		if (hasMultiplePhotos && currentIndex < photoUris.length - 1) {
-			currentIndex = currentIndex + 1;
+	async function goToNext() {
+		if (hasMultiplePhotos && currentIndex < photoUris.length - 1 && !isAnimating) {
+			isAnimating = true;
+			const newIndex = currentIndex + 1;
+			loadedImages.add(newIndex);
+			await ensureImageReady(photoUris[newIndex]);
+			currentIndex = newIndex;
+			setTimeout(() => (isAnimating = false), 300);
 		}
 	}
 
-	function goToSlide(index: number) {
-		currentIndex = index;
+	async function goToSlide(index: number) {
+		if (!isAnimating) {
+			isAnimating = true;
+			loadedImages.add(index);
+			await ensureImageReady(photoUris[index]);
+			currentIndex = index;
+			setTimeout(() => (isAnimating = false), 300);
+		}
 	}
 
 	function prefetchImage(photoUri: string) {
@@ -47,12 +68,33 @@
 		if (!prefetchedImages.has(srcset)) {
 			const img = new Image();
 			img.srcset = srcset;
-			img.sizes = '(max-width: 800px) 80vw, (max-width: 1440px) 80vw, 1152px';
+			img.sizes =
+				'(max-width: 480px) 80vw, (max-width: 768px) 80vw, (max-width: 1440px) 80vw, 72rem';
 			prefetchedImages.add(srcset);
 		}
 	}
 
+	async function ensureImageReady(photoUri: string): Promise<void> {
+		return new Promise((resolve) => {
+			const srcset = getCarouselImageSrcSet(photoUri);
+			const img = new Image();
+			img.onload = async () => {
+				try {
+					await img.decode();
+					resolve();
+				} catch {
+					resolve();
+				}
+			};
+			img.onerror = () => resolve();
+			img.srcset = srcset;
+			img.sizes =
+				'(max-width: 480px) 80vw, (max-width: 768px) 80vw, (max-width: 1440px) 80vw, 72rem';
+		});
+	}
+
 	function handleKeydown(event: KeyboardEvent) {
+		if (!handleKeys) return;
 		if (event.key === 'ArrowLeft' && currentIndex > 0) {
 			goToPrevious();
 		} else if (event.key === 'ArrowRight' && currentIndex < photoUris.length - 1) {
@@ -61,12 +103,10 @@
 	}
 
 	onMount(() => {
-		// Prefetch all images in the carousel
 		photoUris.forEach(prefetchImage);
 	});
 
 	$effect(() => {
-		// Prefetch adjacent images when current index changes
 		if (hasMultiplePhotos) {
 			const prevIndex = (currentIndex - 1 + photoUris.length) % photoUris.length;
 			const nextIndex = (currentIndex + 1) % photoUris.length;
@@ -78,18 +118,31 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="relative flex h-full w-full items-center justify-center bg-black">
+<div class="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
 	{#if photoUris.length > 0}
-		<img
-			srcset={getCarouselImageSrcSet(photoUris[currentIndex])}
-			sizes="(max-width: 800px) 80vw, (max-width: 1440px) 80vw, 1152px"
-			alt="Photo {currentIndex + 1} of {photoUris.length}"
-			class="max-h-full max-w-full object-contain"
-			bind:this={imageElements[currentIndex]}
-		/>
+		<div
+			class="flex h-full transition-transform duration-300 ease-out"
+			style="width: {photoUris.length * 100}%; transform: translateX(-{currentIndex * 100}%);"
+		>
+			{#each photoUris as photoUri, index (photoUri)}
+				<div class="h-full w-full flex-shrink-0 bg-gray-900">
+					{#if Math.abs(index - currentIndex) <= 1 || loadedImages.has(index)}
+						<img
+							srcset={getCarouselImageSrcSet(photoUri)}
+							sizes="(max-width: 480px) 80vw, (max-width: 768px) 80vw, (max-width: 1440px) 80vw, 72rem"
+							alt="Photo {index + 1} of {photoUris.length}"
+							class="h-full w-full object-cover"
+							style="aspect-ratio: 4/3; will-change: transform;"
+							bind:this={imageElements[index]}
+							loading={index === currentIndex ? 'eager' : 'eager'}
+							fetchpriority={index === currentIndex ? 'high' : 'high'}
+						/>
+					{/if}
+				</div>
+			{/each}
+		</div>
 
 		{#if hasMultiplePhotos}
-			<!-- Left arrow -->
 			{#if currentIndex > 0}
 				<button
 					class="absolute top-1/2 left-4 -translate-y-1/2 rounded-full p-3 text-white transition-all duration-200"
@@ -105,7 +158,6 @@
 				</button>
 			{/if}
 
-			<!-- Right arrow -->
 			{#if currentIndex < photoUris.length - 1}
 				<button
 					class="absolute top-1/2 right-4 -translate-y-1/2 rounded-full p-3 text-white transition-all duration-200"
@@ -121,7 +173,6 @@
 				</button>
 			{/if}
 
-			<!-- Dot indicators -->
 			<div class="absolute bottom-4 left-1/2 -translate-x-1/2">
 				<div
 					class="flex items-center rounded-full px-4"

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 	import type { PhotoArray } from '$lib/api-types';
 	import { getPhotoContext } from '$lib/contexts/photo-context';
 	import { getImageSrcSet } from '$lib/utils/image-utils';
@@ -23,8 +23,9 @@
 	let hideTimeout: NodeJS.Timeout;
 	import { SvelteSet } from 'svelte/reactivity';
 	let prefetchedImages = new SvelteSet<string>();
-
-	// Flatten all photos into a single navigable list
+	let loadedImages = new SvelteSet<number>();
+	let isAnimating = $state(false);
+	let isInitialized = $state(false);
 	const flatImageList = $derived(() => {
 		const list: {
 			arrayIndex: number;
@@ -43,11 +44,19 @@
 	});
 
 	$effect(() => {
-		// Find current global index when dependencies change
 		const newIndex = flatImageList().findIndex(
 			(item) => item.arrayIndex === currentArrayIndex && item.photoIndex === currentPhotoIndex
 		);
+		const oldIndex = currentGlobalIndex;
 		currentGlobalIndex = newIndex === -1 ? 0 : newIndex;
+
+		if (Math.abs(currentGlobalIndex - oldIndex) > 1) {
+			const start = Math.min(oldIndex, currentGlobalIndex);
+			const end = Math.max(oldIndex, currentGlobalIndex);
+			for (let i = start; i <= end; i++) {
+				loadedImages.add(i);
+			}
+		}
 	});
 
 	const currentImage = $derived(flatImageList()[currentGlobalIndex]);
@@ -70,10 +79,8 @@
 		const list = flatImageList();
 		if (list.length === 0) return;
 
-		// Prefetch 2 images to each side of current image
 		for (let offset = -2; offset <= 2; offset++) {
-			if (offset === 0) continue; // Skip current image
-
+			if (offset === 0) continue;
 			const index = currentGlobalIndex + offset;
 			if (index >= 0 && index < list.length) {
 				const item = list[index];
@@ -82,45 +89,51 @@
 		}
 	}
 
-	function goToPrevious() {
-		if (currentGlobalIndex > 0) {
-			currentGlobalIndex--;
-			const newImage = flatImageList()[currentGlobalIndex];
+	async function ensureImageReady(photoArray: PhotoArray, photoUri: string): Promise<void> {
+		return new Promise((resolve) => {
+			const srcset = getFullScreenImageSrcSet(photoArray, photoUri);
+			const img = new Image();
+			img.onload = async () => {
+				try {
+					await img.decode();
+					resolve();
+				} catch {
+					resolve(); // Fallback if decode fails
+				}
+			};
+			img.onerror = () => resolve(); // Fallback if load fails
+			img.srcset = srcset;
+			img.sizes = '100vw';
+		});
+	}
+
+	async function goToPrevious() {
+		if (currentGlobalIndex > 0 && !isAnimating) {
+			isAnimating = true;
+			const newGlobalIndex = currentGlobalIndex - 1;
+			const newImage = flatImageList()[newGlobalIndex];
+			loadedImages.add(newGlobalIndex);
+			await ensureImageReady(newImage.photoArray, newImage.photoUri);
+			currentGlobalIndex = newGlobalIndex;
 			currentArrayIndex = newImage.arrayIndex;
 			currentPhotoIndex = newImage.photoIndex;
+			setTimeout(() => (isAnimating = false), 350);
 		}
 	}
 
-	function goToNext() {
-		if (currentGlobalIndex < flatImageList().length - 1) {
-			currentGlobalIndex++;
-			const newImage = flatImageList()[currentGlobalIndex];
+	async function goToNext() {
+		if (currentGlobalIndex < flatImageList().length - 1 && !isAnimating) {
+			isAnimating = true;
+			const newGlobalIndex = currentGlobalIndex + 1;
+			const newImage = flatImageList()[newGlobalIndex];
+			loadedImages.add(newGlobalIndex);
+			await ensureImageReady(newImage.photoArray, newImage.photoUri);
+			currentGlobalIndex = newGlobalIndex;
 			currentArrayIndex = newImage.arrayIndex;
 			currentPhotoIndex = newImage.photoIndex;
+			setTimeout(() => (isAnimating = false), 350);
 		}
 	}
-
-	// function goToPreviousArray() {
-	// 	if (currentArrayIndex > 0) {
-	// 		const newArrayIndex = currentArrayIndex - 1;
-	// 		currentArrayIndex = newArrayIndex;
-	// 		currentPhotoIndex = 0;
-	// 		currentGlobalIndex = flatImageList().findIndex(
-	// 			(item) => item.arrayIndex === newArrayIndex && item.photoIndex === 0
-	// 		);
-	// 	}
-	// }
-
-	// function goToNextArray() {
-	// 	if (currentArrayIndex < photoArrays.length - 1) {
-	// 		const newArrayIndex = currentArrayIndex + 1;
-	// 		currentArrayIndex = newArrayIndex;
-	// 		currentPhotoIndex = 0;
-	// 		currentGlobalIndex = flatImageList().findIndex(
-	// 			(item) => item.arrayIndex === newArrayIndex && item.photoIndex === 0
-	// 		);
-	// 	}
-	// }
 
 	function showControlsTemporarily() {
 		controlsVisible = true;
@@ -140,15 +153,24 @@
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
+			event.stopPropagation();
 			onClose();
 		} else if (event.key === 'ArrowLeft') {
+			event.preventDefault();
+			event.stopPropagation();
+			if (controlsVisible) {
+				controlsVisible = false;
+				clearTimeout(hideTimeout);
+			}
 			goToPrevious();
-			controlsVisible = false;
-			clearTimeout(hideTimeout);
 		} else if (event.key === 'ArrowRight') {
+			event.preventDefault();
+			event.stopPropagation();
+			if (controlsVisible) {
+				controlsVisible = false;
+				clearTimeout(hideTimeout);
+			}
 			goToNext();
-			controlsVisible = false;
-			clearTimeout(hideTimeout);
 		}
 	}
 
@@ -157,36 +179,26 @@
 			onClose();
 		}
 	}
-
-	// Enter/exit browser fullscreen
-	function enterFullscreen() {
-		const elem = document.documentElement;
-		if (elem.requestFullscreen) {
-			elem.requestFullscreen();
-		}
-	}
-
-	function exitFullscreen() {
-		if (document.fullscreenElement && document.exitFullscreen) {
-			document.exitFullscreen();
-		}
-	}
-
-	// Prefetch adjacent images when current index changes
 	$effect(() => {
 		prefetchAdjacentImages();
 	});
 
-	// Initialize auto-hide timer and enter fullscreen
-	$effect(() => {
-		showControlsTemporarily();
-		enterFullscreen();
+	$effect.root(() => {
+		controlsVisible = true;
+		hideTimeout = setTimeout(() => {
+			controlsVisible = false;
+		}, 3000);
 
+		const initialIndex = currentGlobalIndex;
+		loadedImages.add(initialIndex);
+		if (initialIndex > 0) loadedImages.add(initialIndex - 1);
+		if (initialIndex < flatImageList().length - 1) loadedImages.add(initialIndex + 1);
+
+		setTimeout(() => (isInitialized = true), 100);
 		document.addEventListener('fullscreenchange', handleFullscreenChange);
 
 		return () => {
 			clearTimeout(hideTimeout);
-			exitFullscreen();
 			document.removeEventListener('fullscreenchange', handleFullscreenChange);
 		};
 	});
@@ -196,22 +208,45 @@
 
 {#if currentImage}
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black"
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black {controlsVisible
+			? 'cursor-default'
+			: 'cursor-none'}"
 		role="dialog"
 		aria-modal="true"
-		in:fade={{ duration: 300 }}
-		out:fade={{ duration: 300 }}
+		in:fade={{ duration: 400 }}
+		out:fade={{ duration: 400 }}
 		onmousemove={handleMouseMove}
 		onclick={handleClick}
 	>
-		<img
-			srcset={getFullScreenImageSrcSet(currentImage.photoArray, currentImage.photoUri)}
-			sizes="100vw"
-			alt="Photo {currentGlobalIndex + 1} / {flatImageList().length}"
-			class="max-h-full max-w-full object-contain"
-		/>
+		<div
+			in:scale={{ duration: 400, start: 0.1 }}
+			out:scale={{ duration: 400, start: 0.1 }}
+			class="h-full w-full"
+		>
+			<div class="h-full w-full overflow-hidden">
+				<div
+					class="flex h-full {isInitialized ? 'transition-transform duration-300 ease-out' : ''}"
+					style="width: {flatImageList().length *
+						100}vw; transform: translateX(-{currentGlobalIndex * 100}vw);"
+				>
+					{#each flatImageList() as image, index (image.photoUri)}
+						<div class="flex h-full w-screen flex-shrink-0 items-center justify-center bg-black">
+							{#if Math.abs(index - currentGlobalIndex) <= 1 || loadedImages.has(index)}
+								<img
+									srcset={getFullScreenImageSrcSet(image.photoArray, image.photoUri)}
+									sizes="100vw"
+									alt="Photo {index + 1} / {flatImageList().length}"
+									class="max-h-full max-w-full object-contain"
+									loading={index === currentGlobalIndex ? 'eager' : 'lazy'}
+									fetchpriority={index === currentGlobalIndex ? 'high' : 'low'}
+								/>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			</div>
+		</div>
 
-		<!-- Top bar with gradient -->
 		{#if controlsVisible}
 			<div
 				class="absolute top-0 right-0 left-0 z-10 p-6 text-white"
@@ -247,7 +282,6 @@
 			</div>
 		{/if}
 
-		<!-- Navigation arrows -->
 		{#if controlsVisible}
 			{#if currentGlobalIndex > 0}
 				<button
@@ -259,6 +293,7 @@
 					onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
 					onclick={(e) => {
 						e.stopPropagation();
+						showControlsTemporarily();
 						goToPrevious();
 					}}
 					aria-label="Previous image"
@@ -279,6 +314,7 @@
 					onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
 					onclick={(e) => {
 						e.stopPropagation();
+						showControlsTemporarily();
 						goToNext();
 					}}
 					aria-label="Next image"
