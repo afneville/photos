@@ -5,7 +5,7 @@ import type { Handle } from '@sveltejs/kit';
 const trpcHandle = createTRPCHandle({
 	router: appRouter,
 	url: '/api/trpc',
-	createContext: () => createContext()
+	createContext: (event) => createContext(event)
 });
 
 export const handle: Handle = trpcHandle;

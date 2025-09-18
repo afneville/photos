@@ -27,3 +27,18 @@ output "lambda_function_name" {
   description = "Name of the Lambda function"
   value       = aws_lambda_function.image_processor.function_name
 }
+
+output "cognito_user_pool_id" {
+  description = "ID of the Cognito User Pool"
+  value       = aws_cognito_user_pool.photo_gallery_user_pool.id
+}
+
+output "cognito_user_pool_client_id" {
+  description = "ID of the Cognito User Pool Client"
+  value       = aws_cognito_user_pool_client.photo_gallery_client.id
+}
+
+output "cognito_user_pool_endpoint" {
+  description = "Endpoint of the Cognito User Pool"
+  value       = aws_cognito_user_pool.photo_gallery_user_pool.endpoint
+}

@@ -3,13 +3,15 @@ PROCESSED_BUCKET_NAME = $(shell cd ../infra/environments/test && terraform outpu
 DYNAMODB_TABLE_NAME = $(shell cd ../infra/environments/test && terraform output -raw dynamodb_table_name)
 ECR_REPOSITORY_URL = $(shell cd ../infra/environments/test && terraform output -raw ecr_repository_url)
 LAMBDA_FUNCTION_NAME = $(shell cd ../infra/environments/test && terraform output -raw lambda_function_name)
+COGNITO_USER_POOL_ID = $(shell cd ../infra/environments/test && terraform output -raw cognito_user_pool_id)
+COGNITO_USER_POOL_CLIENT_ID = $(shell cd ../infra/environments/test && terraform output -raw cognito_user_pool_client_id)
 AWS_REGION = eu-west-2
 TEST_DATA_IMAGE = $(shell find test_data/test_images -type f | head -1 | sed 's|test_data/test_images/||')
 TEST_DATA_VENV := test_data/venv
 TEST_DATA_PYTHON := $(TEST_DATA_VENV)/bin/python
 TEST_DATA_PIP := $(TEST_DATA_VENV)/bin/pip
 
-.PHONY: help build build-container push-container update-lambda test-local generate-test-event clean setup-test-infra populate-test-data clear-test-data process-test-data teardown-test-infra ecr-login
+.PHONY: help build build-container push-container update-lambda test-local generate-test-event clean setup-test-infra populate-test-data clear-test-data process-test-data teardown-test-infra ecr-login create-admin-user delete-admin-user
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -85,3 +87,40 @@ process-test-data: build generate-lambda-env setup-test-infra populate-test-data
 $(TEST_DATA_VENV):
 	python3 -m venv $(TEST_DATA_VENV)
 	$(TEST_DATA_PIP) install -r test_data/requirements.txt
+
+create-admin-user: ## Create admin user with password from ADMIN_PASSWORD env var
+	@if [ -z "$(ADMIN_EMAIL)" ]; then \
+		echo "Error: ADMIN_EMAIL environment variable is required"; \
+		exit 1; \
+	fi
+	@if [ -z "$(ADMIN_PASSWORD)" ]; then \
+		echo "Error: ADMIN_PASSWORD environment variable is required"; \
+		exit 1; \
+	fi
+	@echo "Creating admin user $(ADMIN_EMAIL) in user pool $(COGNITO_USER_POOL_ID)..."
+	aws cognito-idp admin-create-user \
+		--user-pool-id $(COGNITO_USER_POOL_ID) \
+		--username $(ADMIN_EMAIL) \
+		--user-attributes Name=email,Value=$(ADMIN_EMAIL) Name=email_verified,Value=true \
+		--message-action SUPPRESS \
+		--region $(AWS_REGION)
+	@echo "Setting permanent password for user..."
+	aws cognito-idp admin-set-user-password \
+		--user-pool-id $(COGNITO_USER_POOL_ID) \
+		--username $(ADMIN_EMAIL) \
+		--password $(ADMIN_PASSWORD) \
+		--permanent \
+		--region $(AWS_REGION)
+	@echo "Admin user $(ADMIN_EMAIL) created successfully!"
+
+delete-admin-user: ## Delete admin user (requires ADMIN_EMAIL env var)
+	@if [ -z "$(ADMIN_EMAIL)" ]; then \
+		echo "Error: ADMIN_EMAIL environment variable is required"; \
+		exit 1; \
+	fi
+	@echo "Deleting admin user $(ADMIN_EMAIL) from user pool $(COGNITO_USER_POOL_ID)..."
+	aws cognito-idp admin-delete-user \
+		--user-pool-id $(COGNITO_USER_POOL_ID) \
+		--username $(ADMIN_EMAIL) \
+		--region $(AWS_REGION)
+	@echo "Admin user $(ADMIN_EMAIL) deleted successfully!"

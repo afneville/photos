@@ -22,15 +22,36 @@ import {
 	TRPC_ERROR_CODES,
 	TRPC_ERROR_MESSAGES
 } from './api-types.js';
+import { isAuthenticated } from './auth.js';
+import type { RequestEvent } from '@sveltejs/kit';
 
 interface Context {
 	photoGalleryService: IPhotoGalleryService;
 	photoGalleryId: string;
+	isAuthenticated: boolean;
+	event: RequestEvent;
 }
 
 const t = initTRPC.context<Context>().create();
 
 export const router = t.router;
+export const publicProcedure = t.procedure;
+
+// Middleware that ensures user is authenticated
+const authMiddleware = t.middleware(({ ctx, next }) => {
+	if (!ctx.isAuthenticated) {
+		throw new TRPCError({
+			code: 'UNAUTHORIZED',
+			message: 'Authentication required'
+		});
+	}
+	return next({
+		ctx
+	});
+});
+
+// Protected procedure that requires authentication
+export const protectedProcedure = publicProcedure.use(authMiddleware);
 
 function handleServiceError(error: unknown): never {
 	if (error instanceof PhotoArrayNotFoundError) {
@@ -57,19 +78,44 @@ function handleServiceError(error: unknown): never {
 	});
 }
 
-export function createContext(): Context {
+export async function createContext(event: RequestEvent): Promise<Context> {
 	if (!env.PHOTO_GALLERY_ID) {
 		throw new Error('PHOTO_GALLERY_ID environment variable is required');
 	}
 
+	// Try to get and verify the auth token
+	const token = event.cookies.get('auth_token');
+	const authenticated = token ? await isAuthenticated(token) : false;
+
 	return {
 		photoGalleryService: new PhotoGalleryService(),
-		photoGalleryId: env.PHOTO_GALLERY_ID
+		photoGalleryId: env.PHOTO_GALLERY_ID,
+		isAuthenticated: authenticated,
+		event
 	};
 }
 
 export const appRouter = router({
-	createItem: t.procedure
+	// Public endpoint for viewing photos (no auth required)
+	getPublicItems: publicProcedure
+		.input(getAllItemsSchema)
+		.query(
+			async ({
+				ctx
+			}: {
+				ctx: Context;
+				input: z.infer<typeof getAllItemsSchema>;
+			}): Promise<PhotoArray[]> => {
+				try {
+					const dbItems = await ctx.photoGalleryService.getAllItems(ctx.photoGalleryId);
+					return dbItems.map(toApiType);
+				} catch (error) {
+					handleServiceError(error);
+				}
+			}
+		),
+
+	createItem: protectedProcedure
 		.input(createItemSchema)
 		.mutation(
 			async ({
@@ -96,7 +142,7 @@ export const appRouter = router({
 			}
 		),
 
-	getItem: t.procedure
+	getItem: protectedProcedure
 		.input(getItemSchema)
 		.query(
 			async ({
@@ -118,7 +164,7 @@ export const appRouter = router({
 			}
 		),
 
-	updateItem: t.procedure
+	updateItem: protectedProcedure
 		.input(updateItemSchema)
 		.mutation(
 			async ({
@@ -141,7 +187,7 @@ export const appRouter = router({
 			}
 		),
 
-	deleteItem: t.procedure
+	deleteItem: protectedProcedure
 		.input(deleteItemSchema)
 		.mutation(
 			async ({
@@ -159,7 +205,7 @@ export const appRouter = router({
 			}
 		),
 
-	getAllItems: t.procedure
+	getAllItems: protectedProcedure
 		.input(getAllItemsSchema)
 		.query(
 			async ({
@@ -177,7 +223,7 @@ export const appRouter = router({
 			}
 		),
 
-	moveItem: t.procedure
+	moveItem: protectedProcedure
 		.input(moveItemSchema)
 		.mutation(
 			async ({

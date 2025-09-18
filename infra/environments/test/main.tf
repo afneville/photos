@@ -44,6 +44,7 @@ module "photo_gallery" {
   staging_bucket_name     = "photo-gallery-staging-test"
   processed_bucket_name   = "photo-gallery-serving-test"
   cors_allowed_origins    = ["*"]
+  cognito_user_pool_name  = "photo-gallery-test"
   tags = {
     Environment = "test"
     Project     = "photo-gallery"
@@ -72,5 +73,17 @@ output "ecr_repository_url" {
 
 output "lambda_function_name" {
   value = module.photo_gallery.lambda_function_name
+}
+
+output "cognito_user_pool_id" {
+  value = module.photo_gallery.cognito_user_pool_id
+}
+
+output "cognito_user_pool_client_id" {
+  value = module.photo_gallery.cognito_user_pool_client_id
+}
+
+output "cognito_user_pool_endpoint" {
+  value = module.photo_gallery.cognito_user_pool_endpoint
 }
 

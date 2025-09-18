@@ -54,3 +54,8 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "cognito_user_pool_name" {
+  description = "Name of the Cognito User Pool for authentication"
+  type        = string
+}
