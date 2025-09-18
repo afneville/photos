@@ -4,6 +4,12 @@
 	import { getPhotoContext } from '$lib/contexts/photo-context';
 	import { getImageSrcSet } from '$lib/utils/image-utils';
 	import { CaretLeftIcon, CaretRightIcon } from './icons';
+	import {
+		createButtonHoverHandlers,
+		navigationButtonClass,
+		createBackgroundStyle
+	} from '$lib/utils/style-utils';
+	import { ImagePreloader } from '$lib/utils/image-preloader';
 
 	let {
 		photoArray,
@@ -19,13 +25,15 @@
 	const { galleryId, imageDomain } = photoContext;
 	let imageElements: HTMLImageElement[] = $state([]);
 	import { SvelteSet } from 'svelte/reactivity';
-	let prefetchedImages = new SvelteSet<string>();
+	const imagePreloader = new ImagePreloader();
 
 	const photoUris = $derived(photoArray.photoUris || []);
 	const hasMultiplePhotos = $derived(photoUris.length > 1);
 
 	let isAnimating = $state(false);
 	let loadedImages = new SvelteSet<number>();
+	let disableTransition = $state(false);
+	let previousArrayId = $state(photoArray?.photoArrayId);
 
 	function getCarouselImageSrcSet(photoUri: string): string {
 		return getImageSrcSet(imageDomain, galleryId, photoArray.photoArrayId, photoUri);
@@ -65,32 +73,18 @@
 
 	function prefetchImage(photoUri: string) {
 		const srcset = getCarouselImageSrcSet(photoUri);
-		if (!prefetchedImages.has(srcset)) {
-			const img = new Image();
-			img.srcset = srcset;
-			img.sizes =
-				'(max-width: 480px) 80vw, (max-width: 768px) 80vw, (max-width: 1440px) 80vw, 72rem';
-			prefetchedImages.add(srcset);
-		}
+		imagePreloader.prefetchImage(
+			srcset,
+			'(max-width: 480px) 80vw, (max-width: 768px) 80vw, (max-width: 1440px) 80vw, 72rem'
+		);
 	}
 
 	async function ensureImageReady(photoUri: string): Promise<void> {
-		return new Promise((resolve) => {
-			const srcset = getCarouselImageSrcSet(photoUri);
-			const img = new Image();
-			img.onload = async () => {
-				try {
-					await img.decode();
-					resolve();
-				} catch {
-					resolve();
-				}
-			};
-			img.onerror = () => resolve();
-			img.srcset = srcset;
-			img.sizes =
-				'(max-width: 480px) 80vw, (max-width: 768px) 80vw, (max-width: 1440px) 80vw, 72rem';
-		});
+		const srcset = getCarouselImageSrcSet(photoUri);
+		return imagePreloader.ensureImageReady(
+			srcset,
+			'(max-width: 480px) 80vw, (max-width: 768px) 80vw, (max-width: 1440px) 80vw, 72rem'
+		);
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -104,6 +98,20 @@
 
 	onMount(() => {
 		photoUris.forEach(prefetchImage);
+	});
+
+	const buttonHoverHandlers = createButtonHoverHandlers();
+
+	// Watch for photo array changes to disable animation when switching arrays
+	$effect(() => {
+		if (photoArray?.photoArrayId !== previousArrayId) {
+			disableTransition = true;
+			previousArrayId = photoArray?.photoArrayId;
+			// Re-enable transition after a brief delay
+			setTimeout(() => {
+				disableTransition = false;
+			}, 50);
+		}
 	});
 
 	$effect(() => {
@@ -121,7 +129,7 @@
 <div class="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
 	{#if photoUris.length > 0}
 		<div
-			class="flex h-full transition-transform duration-300 ease-out"
+			class="flex h-full {disableTransition ? '' : 'transition-transform duration-300 ease-out'}"
 			style="width: {photoUris.length * 100}%; transform: translateX(-{currentIndex * 100}%);"
 		>
 			{#each photoUris as photoUri, index (photoUri)}
@@ -134,8 +142,8 @@
 							class="h-full w-full object-cover"
 							style="aspect-ratio: 4/3; will-change: transform;"
 							bind:this={imageElements[index]}
-							loading={index === currentIndex ? 'eager' : 'eager'}
-							fetchpriority={index === currentIndex ? 'high' : 'high'}
+							loading={index === currentIndex ? 'eager' : 'lazy'}
+							fetchpriority={index === currentIndex ? 'high' : 'low'}
 						/>
 					{/if}
 				</div>
@@ -145,12 +153,9 @@
 		{#if hasMultiplePhotos}
 			{#if currentIndex > 0}
 				<button
-					class="absolute top-1/2 left-4 -translate-y-1/2 rounded-full p-3 text-white transition-all duration-200"
-					style="background-color: rgba(0, 0, 0, 0.4);"
-					onmouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					onmouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
-					onfocus={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+					class="{navigationButtonClass} left-4"
+					style={createBackgroundStyle()}
+					{...buttonHoverHandlers}
 					onclick={goToPrevious}
 					aria-label="Previous image"
 				>
@@ -160,12 +165,9 @@
 
 			{#if currentIndex < photoUris.length - 1}
 				<button
-					class="absolute top-1/2 right-4 -translate-y-1/2 rounded-full p-3 text-white transition-all duration-200"
-					style="background-color: rgba(0, 0, 0, 0.4);"
-					onmouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					onmouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
-					onfocus={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+					class="{navigationButtonClass} right-4"
+					style={createBackgroundStyle()}
+					{...buttonHoverHandlers}
 					onclick={goToNext}
 					aria-label="Next image"
 				>

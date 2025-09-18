@@ -32,6 +32,11 @@
 	const hasPreviousArray = $derived(photoArrayIndex > 0);
 	const hasNextArray = $derived(photoArrayIndex < photoArrays.length - 1);
 
+	// Modal dimensions
+	const modalMaxWidth = 1152; // px
+	const modalMargin = 32; // 2rem = 32px
+	const headerHeight = 128; // 8rem = 128px
+
 	function openFullScreen() {
 		// Request fullscreen from user interaction
 		const elem = document.documentElement;
@@ -77,9 +82,12 @@
 	<div
 		class="relative flex flex-col overflow-hidden rounded-lg border-1 border-gray-400 bg-white shadow-2xl"
 		style="
-			width: min(min(90vw, 1152px), calc((90vh - 8rem) * 4 / 3));
-			height: min(90vh, calc(min(min(90vw, 1152px), calc((90vh - 8rem) * 4 / 3)) * 3 / 4 + 8rem));
-			margin: 2rem;
+			--modal-max-width: {modalMaxWidth}px;
+			--modal-margin: {modalMargin}px;
+			--header-height: {headerHeight}px;
+			width: min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3));
+			height: min(90vh, calc(min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3)) * 3 / 4 + var(--header-height)));
+			margin: var(--modal-margin);
 		"
 		in:scale={{ duration: 300, start: 0.1 }}
 		out:scale={{ duration: 300, start: 0.1 }}

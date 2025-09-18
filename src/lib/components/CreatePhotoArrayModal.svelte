@@ -30,7 +30,7 @@
 	}> = $state([]);
 	let selectedImageId = $state<string | null>(null);
 	let isSubmitting = $state(false);
-	let imageCropToolRef: HTMLElement;
+	let imageCropToolRef: any;
 
 	// Generate default timestamp (1st of the month at noon)
 	function getTimestamp() {
@@ -96,7 +96,6 @@
 				const pixelCoords = imageCropToolRef.getPixelCoordinates();
 				if (pixelCoords) {
 					image.pixelCoords = pixelCoords;
-					console.log(`Stored pixel coordinates for image ${id}:`, pixelCoords);
 				}
 			}
 		}
@@ -154,7 +153,6 @@
 
 		// First priority: use stored pixel coordinates if available
 		if (image.pixelCoords) {
-			console.log(`Image ${imageId} using stored pixel coordinates:`, image.pixelCoords);
 			return image.pixelCoords;
 		}
 
@@ -162,13 +160,11 @@
 		if (imageId === selectedImageId && imageCropToolRef) {
 			const pixelCoords = imageCropToolRef.getPixelCoordinates();
 			if (pixelCoords) {
-				console.log(`Image ${imageId} using live pixel coordinates:`, pixelCoords);
 				return pixelCoords;
 			}
 		}
 
 		// Fallback: convert percentage to normalized coordinates (0-1)
-		console.log(`Image ${imageId} using fallback percentage coordinates`);
 		return {
 			x: image.cropCoords.x / 100,
 			y: image.cropCoords.y / 100,
@@ -201,8 +197,6 @@
 				afterRangeKey: undefined
 			});
 
-			console.log('Created photo array:', result);
-
 			// Upload images to the presigned URLs
 			if (result.presignedUrls.length === uploadedImages.length) {
 				const uploadPromises = uploadedImages.map(async (image, index) => {
@@ -220,7 +214,6 @@
 				});
 
 				await Promise.all(uploadPromises);
-				console.log('All images uploaded successfully');
 			}
 
 			onSuccess?.();
@@ -288,8 +281,8 @@
 
 				<!-- Date Selection -->
 				<div>
-					<label class="mb-2 block text-sm font-medium text-gray-700">Date</label>
-					<div class="flex gap-4">
+					<label for="date-inputs" class="mb-2 block text-sm font-medium text-gray-700">Date</label>
+					<div id="date-inputs" class="flex gap-4">
 						<div>
 							<label for="month" class="mb-1 block text-xs text-gray-500">Month</label>
 							<select

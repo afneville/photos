@@ -48,7 +48,6 @@
 	}
 
 	function openFullScreen(arrayIndex: number, photoIndex: number) {
-		console.log(arrayIndex, photoIndex);
 		currentArrayIndex = arrayIndex;
 		currentPhotoIndex = photoIndex;
 		isFullScreenOpen = true;

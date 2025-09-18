@@ -41,9 +41,7 @@
 
 		imageLoaded = true;
 
-		// Log actual image dimensions for debugging
-		console.log('Image natural dimensions:', imageDimensions.width, 'x', imageDimensions.height);
-		console.log('Container dimensions:', containerWidth, 'x', containerHeight);
+		// Store dimensions for coordinate calculations
 
 		updateCropFromCoords();
 	}

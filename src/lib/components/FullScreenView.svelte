@@ -4,6 +4,12 @@
 	import { getPhotoContext } from '$lib/contexts/photo-context';
 	import { getImageSrcSet } from '$lib/utils/image-utils';
 	import { CaretLeftIcon, CaretRightIcon, XIcon, MapPinIcon, CalendarDotsIcon } from './icons';
+	import {
+		createButtonHoverHandlers,
+		navigationButtonClass,
+		createBackgroundStyle
+	} from '$lib/utils/style-utils';
+	import { ImagePreloader } from '$lib/utils/image-preloader';
 
 	let {
 		currentArrayIndex = $bindable(),
@@ -22,7 +28,7 @@
 	let controlsVisible = $state(true);
 	let hideTimeout: NodeJS.Timeout;
 	import { SvelteSet } from 'svelte/reactivity';
-	let prefetchedImages = new SvelteSet<string>();
+	const imagePreloader = new ImagePreloader();
 	let loadedImages = new SvelteSet<number>();
 	let isAnimating = $state(false);
 	let isInitialized = $state(false);
@@ -67,12 +73,7 @@
 
 	function prefetchImage(photoArray: PhotoArray, photoUri: string) {
 		const srcset = getFullScreenImageSrcSet(photoArray, photoUri);
-		if (!prefetchedImages.has(srcset)) {
-			const img = new Image();
-			img.srcset = srcset;
-			img.sizes = '100vw';
-			prefetchedImages.add(srcset);
-		}
+		imagePreloader.prefetchImage(srcset, '100vw');
 	}
 
 	function prefetchAdjacentImages() {
@@ -90,21 +91,8 @@
 	}
 
 	async function ensureImageReady(photoArray: PhotoArray, photoUri: string): Promise<void> {
-		return new Promise((resolve) => {
-			const srcset = getFullScreenImageSrcSet(photoArray, photoUri);
-			const img = new Image();
-			img.onload = async () => {
-				try {
-					await img.decode();
-					resolve();
-				} catch {
-					resolve(); // Fallback if decode fails
-				}
-			};
-			img.onerror = () => resolve(); // Fallback if load fails
-			img.srcset = srcset;
-			img.sizes = '100vw';
-		});
+		const srcset = getFullScreenImageSrcSet(photoArray, photoUri);
+		return imagePreloader.ensureImageReady(srcset, '100vw');
 	}
 
 	async function goToPrevious() {
@@ -183,6 +171,8 @@
 		prefetchAdjacentImages();
 	});
 
+	const buttonHoverHandlers = createButtonHoverHandlers();
+
 	$effect.root(() => {
 		controlsVisible = true;
 		hideTimeout = setTimeout(() => {
@@ -213,10 +203,12 @@
 			: 'cursor-none'}"
 		role="dialog"
 		aria-modal="true"
+		tabindex="-1"
 		in:fade={{ duration: 400 }}
 		out:fade={{ duration: 400 }}
 		onmousemove={handleMouseMove}
 		onclick={handleClick}
+		onkeydown={handleClick}
 	>
 		<div
 			in:scale={{ duration: 400, start: 0.1 }}
@@ -285,12 +277,9 @@
 		{#if controlsVisible}
 			{#if currentGlobalIndex > 0}
 				<button
-					class="absolute top-1/2 left-4 -translate-y-1/2 rounded-full p-3 text-white transition-all duration-200"
-					style="background-color: rgba(0, 0, 0, 0.4);"
-					onmouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					onmouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
-					onfocus={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+					class="{navigationButtonClass} left-4"
+					style={createBackgroundStyle()}
+					{...buttonHoverHandlers}
 					onclick={(e) => {
 						e.stopPropagation();
 						showControlsTemporarily();
@@ -306,12 +295,9 @@
 
 			{#if currentGlobalIndex < flatImageList().length - 1}
 				<button
-					class="absolute top-1/2 right-4 -translate-y-1/2 rounded-full p-3 text-white transition-all duration-200"
-					style="background-color: rgba(0, 0, 0, 0.4);"
-					onmouseover={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					onmouseout={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
-					onfocus={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.6)')}
-					onblur={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.4)')}
+					class="{navigationButtonClass} right-4"
+					style={createBackgroundStyle()}
+					{...buttonHoverHandlers}
 					onclick={(e) => {
 						e.stopPropagation();
 						showControlsTemporarily();
