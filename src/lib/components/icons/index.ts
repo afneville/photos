@@ -10,7 +10,7 @@ export { default as LinkedinIcon } from './LinkedinIcon.svelte';
 export { default as MapPinIcon } from './MapPinIcon.svelte';
 export { default as MessageCircleIcon } from './MessageCircleIcon.svelte';
 export { default as MoonIcon } from './MoonIcon.svelte';
-export { default as ScalesIcon } from './ScalesIcon.svelte';
+export { default as ScaleIcon } from './ScaleIcon.svelte';
 export { default as SettingsIcon } from './SettingsIcon.svelte';
 export { default as SunIcon } from './SunIcon.svelte';
 export { default as UserIcon } from './UserIcon.svelte';

@@ -10,6 +10,7 @@
 		createBackgroundStyle
 	} from '$lib/utils/style-utils';
 	import { ImagePreloader } from '$lib/utils/image-preloader';
+	import { createSwipeHandlers } from '$lib/utils/swipe-utils';
 
 	let {
 		currentArrayIndex = $bindable(),
@@ -139,9 +140,22 @@
 		showControlsTemporarily();
 	}
 
-	function handleKeydown(event: KeyboardEvent) {
+	async function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
 			event.stopPropagation();
+			try {
+				if (document.fullscreenElement) {
+					await document.exitFullscreen();
+				}
+				// Unlock orientation if it was locked
+				if (screen.orientation && screen.orientation.unlock) {
+					screen.orientation.unlock();
+				} else if (screen.unlockOrientation) {
+					screen.unlockOrientation();
+				}
+			} catch (error) {
+				console.debug('Error exiting fullscreen:', error);
+			}
 			onClose();
 		} else if (event.key === 'ArrowLeft') {
 			event.preventDefault();
@@ -164,6 +178,12 @@
 
 	function handleFullscreenChange() {
 		if (!document.fullscreenElement) {
+			// Unlock orientation when exiting fullscreen
+			if (screen.orientation && screen.orientation.unlock) {
+				screen.orientation.unlock();
+			} else if (screen.unlockOrientation) {
+				screen.unlockOrientation();
+			}
 			onClose();
 		}
 	}
@@ -172,6 +192,18 @@
 	});
 
 	const buttonHoverHandlers = createButtonHoverHandlers();
+	const fullScreenSwipeHandlers = createSwipeHandlers({
+		onSwipeLeft: () => {
+			if (currentGlobalIndex < flatImageList().length - 1) {
+				goToNext();
+			}
+		},
+		onSwipeRight: () => {
+			if (currentGlobalIndex > 0) {
+				goToPrevious();
+			}
+		}
+	});
 
 	$effect.root(() => {
 		controlsVisible = true;
@@ -209,6 +241,7 @@
 		onmousemove={handleMouseMove}
 		onclick={handleClick}
 		onkeydown={handleClick}
+		{...fullScreenSwipeHandlers}
 	>
 		<div
 			in:scale={{ duration: 400, start: 0.1 }}
@@ -242,7 +275,12 @@
 		{#if controlsVisible}
 			<div
 				class="absolute top-0 right-0 left-0 z-10 p-6 text-white"
-				style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);"
+				style="
+					background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);
+					margin-top: env(safe-area-inset-top);
+					margin-left: env(safe-area-inset-left);
+					margin-right: env(safe-area-inset-right);
+				"
 				in:fade={{ duration: 300 }}
 				out:fade={{ duration: 300 }}
 			>
@@ -262,8 +300,21 @@
 					</div>
 					<button
 						class="rounded-full p-3 text-white transition-all duration-200"
-						onclick={(e) => {
+						onclick={async (e) => {
 							e.stopPropagation();
+							try {
+								if (document.fullscreenElement) {
+									await document.exitFullscreen();
+								}
+								// Unlock orientation if it was locked
+								if (screen.orientation && screen.orientation.unlock) {
+									screen.orientation.unlock();
+								} else if (screen.unlockOrientation) {
+									screen.unlockOrientation();
+								}
+							} catch (error) {
+								console.debug('Error exiting fullscreen:', error);
+							}
 							onClose();
 						}}
 						aria-label="Close full screen"
@@ -278,7 +329,7 @@
 			{#if currentGlobalIndex > 0}
 				<button
 					class="{navigationButtonClass} left-4"
-					style={createBackgroundStyle()}
+					style="{createBackgroundStyle()}; margin-left: env(safe-area-inset-left);"
 					{...buttonHoverHandlers}
 					onclick={(e) => {
 						e.stopPropagation();
@@ -296,7 +347,7 @@
 			{#if currentGlobalIndex < flatImageList().length - 1}
 				<button
 					class="{navigationButtonClass} right-4"
-					style={createBackgroundStyle()}
+					style="{createBackgroundStyle()}; margin-right: env(safe-area-inset-right);"
 					{...buttonHoverHandlers}
 					onclick={(e) => {
 						e.stopPropagation();

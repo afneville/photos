@@ -14,15 +14,34 @@
 			Alexander Neville
 		</h1>
 		<div class="icon-container ml-1 flex gap-5">
-			<IconLink href="https://afneville.com" icon={UserIcon} size="24" />
-			<IconLink href="mailto:contact@afneville.com" icon={AtSignIcon} size="24" />
+			<IconLink href="https://afneville.com" size="24">
+				{#snippet icon({ size })}
+					<UserIcon {size} />
+				{/snippet}
+			</IconLink>
+			<IconLink href="mailto:contact@afneville.com" size="24">
+				{#snippet icon({ size })}
+					<AtSignIcon {size} />
+				{/snippet}
+			</IconLink>
 			<IconLink
 				href="https://signal.me/#eu/vaojnhDojUTxZPfY7OcrxXKde-0_TQoq8Ho1VGVasQ4Nx5l-27tJqbDod4z3zMfN"
-				icon={MessageCircleIcon}
 				size="24"
-			/>
-			<IconLink href="https://github.com/afneville" icon={GithubIcon} size="24" />
-			<IconLink href="https://linkedin.com/in/afneville" icon={LinkedinIcon} size="24" />
+			>
+				{#snippet icon({ size })}
+					<MessageCircleIcon {size} />
+				{/snippet}
+			</IconLink>
+			<IconLink href="https://github.com/afneville" size="24">
+				{#snippet icon({ size })}
+					<GithubIcon {size} />
+				{/snippet}
+			</IconLink>
+			<IconLink href="https://linkedin.com/in/afneville" size="24">
+				{#snippet icon({ size })}
+					<LinkedinIcon {size} />
+				{/snippet}
+			</IconLink>
 		</div>
 	</div>
 </div>

@@ -10,6 +10,7 @@
 		createBackgroundStyle
 	} from '$lib/utils/style-utils';
 	import { ImagePreloader } from '$lib/utils/image-preloader';
+	import { createSwipeHandlers } from '$lib/utils/swipe-utils';
 
 	let {
 		photoArray,
@@ -101,13 +102,23 @@
 	});
 
 	const buttonHoverHandlers = createButtonHoverHandlers();
+	const swipeHandlers = createSwipeHandlers({
+		onSwipeLeft: () => {
+			if (hasMultiplePhotos && currentIndex < photoUris.length - 1) {
+				goToNext();
+			}
+		},
+		onSwipeRight: () => {
+			if (hasMultiplePhotos && currentIndex > 0) {
+				goToPrevious();
+			}
+		}
+	});
 
-	// Watch for photo array changes to disable animation when switching arrays
 	$effect(() => {
 		if (photoArray?.photoArrayId !== previousArrayId) {
 			disableTransition = true;
 			previousArrayId = photoArray?.photoArrayId;
-			// Re-enable transition after a brief delay
 			setTimeout(() => {
 				disableTransition = false;
 			}, 50);
@@ -128,6 +139,7 @@
 
 <div
 	class="relative flex h-full w-full items-center justify-center overflow-hidden bg-[var(--bg-image)]"
+	{...swipeHandlers}
 >
 	{#if photoUris.length > 0}
 		<div
@@ -155,7 +167,7 @@
 		{#if hasMultiplePhotos}
 			{#if currentIndex > 0}
 				<button
-					class="{navigationButtonClass} left-4"
+					class="{navigationButtonClass} left-4 hidden sm:flex"
 					style={createBackgroundStyle()}
 					{...buttonHoverHandlers}
 					onclick={goToPrevious}
@@ -167,7 +179,7 @@
 
 			{#if currentIndex < photoUris.length - 1}
 				<button
-					class="{navigationButtonClass} right-4"
+					class="{navigationButtonClass} right-4 hidden sm:flex"
 					style={createBackgroundStyle()}
 					{...buttonHoverHandlers}
 					onclick={goToNext}
@@ -180,35 +192,35 @@
 			<div class="absolute bottom-4 left-1/2 -translate-x-1/2">
 				<div
 					class="flex items-center rounded-full px-4"
-					style="background-color: var(--overlay); height: 2.5rem;"
+					style="background-color: var(--overlay); height: 2rem;"
 				>
 					<div class="flex items-center space-x-2">
 						{#each photoUris as photoUri, index (photoUri)}
 							<button
 								class="rounded-full transition-all duration-200 {index === currentIndex
-									? 'h-4 w-4 shadow-lg'
-									: 'h-3 w-3'}"
+									? 'h-3 w-3 shadow-lg'
+									: 'h-2 w-2'}"
 								style="background-color: {index === currentIndex
-									? 'var(--text-inverse)'
-									: 'var(--text-muted)'};"
+									? 'white'
+									: '#aaa'};"
 								onmouseover={(e) => {
 									if (index !== currentIndex) {
-										e.currentTarget.style.backgroundColor = 'var(--text-secondary)';
+										e.currentTarget.style.backgroundColor = '#ccc';
 									}
 								}}
 								onmouseout={(e) => {
 									if (index !== currentIndex) {
-										e.currentTarget.style.backgroundColor = 'var(--text-muted)';
+										e.currentTarget.style.backgroundColor = '#aaa';
 									}
 								}}
 								onfocus={(e) => {
 									if (index !== currentIndex) {
-										e.currentTarget.style.backgroundColor = 'var(--text-secondary)';
+										e.currentTarget.style.backgroundColor = '#ccc';
 									}
 								}}
 								onblur={(e) => {
 									if (index !== currentIndex) {
-										e.currentTarget.style.backgroundColor = 'var(--text-muted)';
+										e.currentTarget.style.backgroundColor = '#aaa';
 									}
 								}}
 								onclick={() => goToSlide(index)}

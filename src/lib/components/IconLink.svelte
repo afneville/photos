@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ComponentType } from 'svelte';
+	import type { Snippet } from 'svelte';
 
 	let {
 		href,
@@ -8,7 +8,7 @@
 		className = ''
 	}: {
 		href: string;
-		icon: ComponentType;
+		icon: Snippet<[{ size: string }]>;
 		size?: string;
 		className?: string;
 	} = $props();
@@ -20,5 +20,5 @@
 	rel="noopener noreferrer"
 	class="text-[var(--text-secondary)] transition-colors duration-200 hover:text-[var(--text-primary)] {className}"
 >
-	<svelte:component this={icon} {size} />
+	{@render icon({size})}
 </a>

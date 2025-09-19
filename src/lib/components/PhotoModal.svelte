@@ -37,12 +37,41 @@
 	const modalMargin = 32; // 2rem = 32px
 	const headerHeight = 128; // 8rem = 128px
 
-	function openFullScreen() {
-		// Request fullscreen from user interaction
-		const elem = document.documentElement;
-		if (elem.requestFullscreen) {
-			elem.requestFullscreen();
+	async function openFullScreen() {
+		try {
+			// Request fullscreen from user interaction
+			const elem = document.documentElement;
+			if (elem.requestFullscreen) {
+				await elem.requestFullscreen();
+			}
+			
+			// Request landscape orientation on mobile
+			if (screen.orientation && screen.orientation.lock) {
+				try {
+					// Try different landscape orientations
+					await screen.orientation.lock('landscape-primary').catch(() => 
+						screen.orientation.lock('landscape').catch(() =>
+							screen.orientation.lock('landscape-secondary')
+						)
+					);
+				} catch (orientationError) {
+					// Orientation lock might fail, that's okay
+					console.debug('Could not lock orientation:', orientationError);
+				}
+			} else if (screen.lockOrientation) {
+				// Fallback for older browsers
+				try {
+					screen.lockOrientation('landscape') || 
+					screen.lockOrientation('landscape-primary') ||
+					screen.lockOrientation('landscape-secondary');
+				} catch (orientationError) {
+					console.debug('Could not lock orientation (fallback):', orientationError);
+				}
+			}
+		} catch (fullscreenError) {
+			console.debug('Could not enter fullscreen:', fullscreenError);
 		}
+		
 		onFullScreen(currentPhotoIndex);
 	}
 
@@ -68,6 +97,7 @@
 			return;
 		}
 	}
+
 </script>
 
 <svelte:window on:keydown={handleKeydown} />

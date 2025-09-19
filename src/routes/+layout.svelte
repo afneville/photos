@@ -3,7 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import Heading from '$lib/components/Heading.svelte';
-	import { ScalesIcon, GitBranchIcon } from '$lib/components/icons';
+	import { ScaleIcon, GitBranchIcon } from '$lib/components/icons';
 	import { BUILD_INFO } from '$lib/utils/build-info';
 
 	let { children } = $props();
@@ -36,7 +36,7 @@
 				rel="noopener noreferrer"
 				class="flex items-center gap-2 leading-none text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
 			>
-				<ScalesIcon size="20" />
+				<ScaleIcon size="20" />
 				CC BY-SA 4.0
 			</a>
 			{#if BUILD_INFO.commitHash}
