@@ -132,12 +132,20 @@
 		}, 3000);
 	}
 
-	function handleMouseMove() {
-		showControlsTemporarily();
+	function handleMouseMove(event: MouseEvent) {
+		// Only show controls on actual mouse movement, not touch events
+		if (event.pointerType === 'mouse' || !('ontouchstart' in window)) {
+			showControlsTemporarily();
+		}
 	}
 
-	function handleClick() {
-		showControlsTemporarily();
+	function handleClick(event: MouseEvent) {
+		if (controlsVisible) {
+			controlsVisible = false;
+			clearTimeout(hideTimeout);
+		} else {
+			showControlsTemporarily();
+		}
 	}
 
 	async function handleKeydown(event: KeyboardEvent) {
@@ -194,11 +202,19 @@
 	const buttonHoverHandlers = createButtonHoverHandlers();
 	const fullScreenSwipeHandlers = createSwipeHandlers({
 		onSwipeLeft: () => {
+			if (controlsVisible) {
+				controlsVisible = false;
+				clearTimeout(hideTimeout);
+			}
 			if (currentGlobalIndex < flatImageList().length - 1) {
 				goToNext();
 			}
 		},
 		onSwipeRight: () => {
+			if (controlsVisible) {
+				controlsVisible = false;
+				clearTimeout(hideTimeout);
+			}
 			if (currentGlobalIndex > 0) {
 				goToPrevious();
 			}
@@ -240,7 +256,6 @@
 		out:fade={{ duration: 400 }}
 		onmousemove={handleMouseMove}
 		onclick={handleClick}
-		onkeydown={handleClick}
 		{...fullScreenSwipeHandlers}
 	>
 		<div
