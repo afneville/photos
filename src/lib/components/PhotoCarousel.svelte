@@ -126,14 +126,16 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
+<div
+	class="relative flex h-full w-full items-center justify-center overflow-hidden bg-[var(--bg-image)]"
+>
 	{#if photoUris.length > 0}
 		<div
 			class="flex h-full {disableTransition ? '' : 'transition-transform duration-300 ease-out'}"
 			style="width: {photoUris.length * 100}%; transform: translateX(-{currentIndex * 100}%);"
 		>
 			{#each photoUris as photoUri, index (photoUri)}
-				<div class="h-full w-full flex-shrink-0 bg-gray-900">
+				<div class="h-full w-full flex-shrink-0 bg-[var(--bg-image)]">
 					{#if Math.abs(index - currentIndex) <= 1 || loadedImages.has(index)}
 						<img
 							srcset={getCarouselImageSrcSet(photoUri)}
@@ -178,7 +180,7 @@
 			<div class="absolute bottom-4 left-1/2 -translate-x-1/2">
 				<div
 					class="flex items-center rounded-full px-4"
-					style="background-color: rgba(0, 0, 0, 0.4); height: 2.5rem;"
+					style="background-color: var(--overlay); height: 2.5rem;"
 				>
 					<div class="flex items-center space-x-2">
 						{#each photoUris as photoUri, index (photoUri)}
@@ -187,26 +189,26 @@
 									? 'h-4 w-4 shadow-lg'
 									: 'h-3 w-3'}"
 								style="background-color: {index === currentIndex
-									? 'rgba(255, 255, 255, 0.85)'
-									: 'rgba(255, 255, 255, 0.6)'};"
+									? 'var(--text-inverse)'
+									: 'var(--text-muted)'};"
 								onmouseover={(e) => {
 									if (index !== currentIndex) {
-										e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+										e.currentTarget.style.backgroundColor = 'var(--text-secondary)';
 									}
 								}}
 								onmouseout={(e) => {
 									if (index !== currentIndex) {
-										e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
+										e.currentTarget.style.backgroundColor = 'var(--text-muted)';
 									}
 								}}
 								onfocus={(e) => {
 									if (index !== currentIndex) {
-										e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+										e.currentTarget.style.backgroundColor = 'var(--text-secondary)';
 									}
 								}}
 								onblur={(e) => {
 									if (index !== currentIndex) {
-										e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
+										e.currentTarget.style.backgroundColor = 'var(--text-muted)';
 									}
 								}}
 								onclick={() => goToSlide(index)}
@@ -218,7 +220,7 @@
 			</div>
 		{/if}
 	{:else}
-		<div class="text-center text-white">
+		<div class="text-center text-[var(--text-inverse)]">
 			<p>No photos available</p>
 		</div>
 	{/if}

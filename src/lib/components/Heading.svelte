@@ -7,10 +7,12 @@
 	<img
 		src="/assets/panda.jpg"
 		alt="Profile"
-		class="profile-image h-20 w-20 rounded-full border border-gray-300 object-cover"
+		class="profile-image h-20 w-20 rounded-full border border-[var(--border-normal)] object-cover"
 	/>
 	<div class="details-wrapper flex flex-col">
-		<h1 class="heading-title mb-2 text-4xl font-bold text-gray-800">Alexander Neville</h1>
+		<h1 class="heading-title mb-2 text-4xl font-bold text-[var(--text-primary)]">
+			Alexander Neville
+		</h1>
 		<div class="icon-container ml-1 flex gap-5">
 			<IconLink href="https://afneville.com" icon={UserIcon} size="24" />
 			<IconLink href="mailto:contact@afneville.com" icon={AtSignIcon} size="24" />

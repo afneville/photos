@@ -18,7 +18,7 @@
 	{href}
 	target="_blank"
 	rel="noopener noreferrer"
-	class="text-gray-500 hover:text-gray-700 transition-colors duration-200 {className}"
+	class="text-[var(--text-secondary)] transition-colors duration-200 hover:text-[var(--text-primary)] {className}"
 >
 	<svelte:component this={icon} {size} />
 </a>

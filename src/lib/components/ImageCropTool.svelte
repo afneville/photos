@@ -100,7 +100,7 @@
 		// Calculate how the image is actually displayed (object-contain behavior)
 		const imageAspect = imageDimensions.width / imageDimensions.height;
 		const containerAspect = containerWidth / containerHeight;
-		
+
 		let displayedWidth: number;
 		let displayedHeight: number;
 		let offsetX: number = 0;
@@ -138,7 +138,11 @@
 		// Ensure coordinates don't exceed image bounds
 		const finalX = Math.max(0, Math.min(imageDimensions.width - pixelSize, pixelX));
 		const finalY = Math.max(0, Math.min(imageDimensions.height - pixelSize, pixelY));
-		const finalSize = Math.min(pixelSize, imageDimensions.width - finalX, imageDimensions.height - finalY);
+		const finalSize = Math.min(
+			pixelSize,
+			imageDimensions.width - finalX,
+			imageDimensions.height - finalY
+		);
 
 		return {
 			x: finalX,

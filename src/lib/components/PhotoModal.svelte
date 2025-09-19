@@ -73,15 +73,17 @@
 <svelte:window on:keydown={handleKeydown} />
 
 <div
-	class="fixed inset-0 z-50 flex items-center justify-center bg-gray-400/30 backdrop-blur-md"
+	class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md"
+	style="background-color: var(--overlay);"
 	role="dialog"
 	aria-modal="true"
 	in:fade={{ duration: 300 }}
 	out:fade={{ duration: 300 }}
 >
 	<div
-		class="relative flex flex-col overflow-hidden rounded-lg border-1 border-gray-400 bg-white shadow-2xl"
+		class="relative flex flex-col overflow-hidden rounded-lg border border-[var(--border-normal)] shadow-2xl"
 		style="
+			background-color: var(--bg-modal);
 			--modal-max-width: {modalMaxWidth}px;
 			--modal-margin: {modalMargin}px;
 			--header-height: {headerHeight}px;
@@ -92,12 +94,14 @@
 		in:scale={{ duration: 300, start: 0.1 }}
 		out:scale={{ duration: 300, start: 0.1 }}
 	>
-		<div class="flex h-16 flex-shrink-0 items-center justify-end border-b border-gray-400 px-4">
+		<div
+			class="flex h-16 flex-shrink-0 items-center justify-end border-b border-[var(--border-normal)] px-4"
+		>
 			<div class="flex items-center space-x-2">
 				<button
 					class="flex h-10 w-10 items-center justify-center rounded-full {hasPreviousArray
-						? 'hover:bg-gray-100'
-						: 'cursor-not-allowed text-gray-400'}"
+						? 'hover:bg-[var(--bg-hover)]'
+						: 'cursor-not-allowed text-[var(--text-muted)]'}"
 					onclick={goToPreviousArray}
 					disabled={!hasPreviousArray}
 					aria-label="Previous array"
@@ -106,8 +110,8 @@
 				</button>
 				<button
 					class="flex h-10 w-10 items-center justify-center rounded-full {hasNextArray
-						? 'hover:bg-gray-100'
-						: 'cursor-not-allowed text-gray-400'}"
+						? 'hover:bg-[var(--bg-hover)]'
+						: 'cursor-not-allowed text-[var(--text-muted)]'}"
 					onclick={goToNextArray}
 					disabled={!hasNextArray}
 					aria-label="Next array"
@@ -115,14 +119,14 @@
 					<CaretRightIcon size="20" />
 				</button>
 				<button
-					class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
+					class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--bg-hover)]"
 					onclick={openFullScreen}
 					aria-label="Full Screen"
 				>
 					<ArrowsOutSimpleIcon size="20" />
 				</button>
 				<button
-					class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
+					class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--bg-hover)]"
 					onclick={onClose}
 					aria-label="Close modal"
 				>
@@ -139,7 +143,10 @@
 			/>
 		</div>
 
-		<div class="relative z-10 flex-shrink-0 border-t border-gray-400 bg-white p-4">
+		<div
+			class="relative z-10 flex-shrink-0 border-t border-[var(--border-normal)] p-4"
+			style="background-color: var(--bg-modal);"
+		>
 			<div class="flex justify-end">
 				<div class="flex items-center gap-6">
 					<span class="flex items-center gap-2">
