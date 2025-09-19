@@ -155,12 +155,6 @@
 				if (document.fullscreenElement) {
 					await document.exitFullscreen();
 				}
-				// Unlock orientation if it was locked
-				if (screen.orientation && screen.orientation.unlock) {
-					screen.orientation.unlock();
-				} else if (screen.unlockOrientation) {
-					screen.unlockOrientation();
-				}
 			} catch (error) {
 				console.debug('Error exiting fullscreen:', error);
 			}
@@ -186,12 +180,6 @@
 
 	function handleFullscreenChange() {
 		if (!document.fullscreenElement) {
-			// Unlock orientation when exiting fullscreen
-			if (screen.orientation && screen.orientation.unlock) {
-				screen.orientation.unlock();
-			} else if (screen.unlockOrientation) {
-				screen.unlockOrientation();
-			}
 			onClose();
 		}
 	}
@@ -320,12 +308,6 @@
 							try {
 								if (document.fullscreenElement) {
 									await document.exitFullscreen();
-								}
-								// Unlock orientation if it was locked
-								if (screen.orientation && screen.orientation.unlock) {
-									screen.orientation.unlock();
-								} else if (screen.unlockOrientation) {
-									screen.unlockOrientation();
 								}
 							} catch (error) {
 								console.debug('Error exiting fullscreen:', error);
