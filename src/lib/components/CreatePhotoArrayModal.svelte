@@ -30,7 +30,7 @@
 	}> = $state([]);
 	let selectedImageId = $state<string | null>(null);
 	let isSubmitting = $state(false);
-	let imageCropToolRef: HTMLElement;
+	let imageCropToolRef = $state<HTMLElement>();
 
 	// Generate default timestamp (1st of the month at noon)
 	function getTimestamp() {
