@@ -51,7 +51,7 @@ def increment_processed_count(photo_gallery_id, photo_array_id):
             return False
 
         table = dynamodb_resource.Table(table_name)
-        
+
         response = table.update_item(
             Key={
                 "photoGalleryId": photo_gallery_id,
@@ -247,7 +247,7 @@ def lambda_handler(event, context):
             uploaded_files = []
 
             for size_name, image_buffer in processed_images.items():
-                processed_key = f"{parsed_key['photo_gallery_id']}/{parsed_key['photo_array_id']}/{parsed_key['photo_uri']}/{size_name}"
+                processed_key = f"photos/{parsed_key['photo_uri']}/{size_name}"
 
                 try:
                     s3_client.put_object(

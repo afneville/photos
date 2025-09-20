@@ -9,11 +9,8 @@
 	function updateTheme() {
 		const isDark = theme === 'dark' || (theme === 'auto' && systemTheme === 'dark');
 
-		// Add a smooth transition class temporarily
-		// document.documentElement.style.transition = 'background-color 0.3s ease, color 0.3s ease';
 		document.documentElement.classList.toggle('dark', isDark);
 
-		// Remove transition after animation completes to avoid affecting other animations
 		setTimeout(() => {
 			document.documentElement.style.transition = '';
 		}, 300);

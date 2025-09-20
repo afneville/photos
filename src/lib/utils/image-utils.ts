@@ -13,7 +13,7 @@ export function getImageUrl(
 	photoUri: string,
 	quality: ImageQuality
 ): string {
-	return `${imageDomain}/${galleryId}/${photoArrayId}/${photoUri}/${quality}`;
+	return `${imageDomain}/photos/${photoUri}/${quality}`;
 }
 
 export function getImageSrcSet(

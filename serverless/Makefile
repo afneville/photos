@@ -16,16 +16,16 @@ TEST_DATA_PIP := $(TEST_DATA_VENV)/bin/pip
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-build: ## Build Lambda function using SAM
+build:
 	sam build --use-container
 
-build-container: ## Build Lambda container image using SAM
+build-container:
 	sam build
 
-ecr-login: ## Login to ECR
+ecr-login:
 	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REPOSITORY_URL)
 
-push-container: build-container ecr-login ## Build and push container to ECR
+push-container: build-container ecr-login
 	$(eval IMAGE_TAG := $(shell date +%Y%m%d-%H%M%S))
 	docker tag imageprocessorfunction:latest $(ECR_REPOSITORY_URL):$(IMAGE_TAG)
 	docker tag imageprocessorfunction:latest $(ECR_REPOSITORY_URL):latest
@@ -33,13 +33,13 @@ push-container: build-container ecr-login ## Build and push container to ECR
 	docker push $(ECR_REPOSITORY_URL):latest
 	@echo "Pushed image with tag: $(IMAGE_TAG)"
 
-update-lambda: push-container ## Update Lambda function with new container image
+update-lambda: push-container
 	aws lambda update-function-code \
 		--function-name $(LAMBDA_FUNCTION_NAME) \
 		--image-uri $(ECR_REPOSITORY_URL):latest \
 		--region $(AWS_REGION)
 
-deploy-lambda: push-container update-lambda ## Deploy Lambda container to AWS
+deploy-lambda: push-container update-lambda
 
 generate-test-event:
 	mkdir -p events
@@ -61,7 +61,7 @@ clean:
 	rm -rf env.json
 	rm -rf image_processor/venv/
 
-setup-test-infra: ## Deploy all infrastructure including placeholder Lambda
+setup-test-infra:
 	cd ../infra/environments/test && terraform apply -auto-approve
 
 teardown-test-infra: clear-test-data
@@ -88,7 +88,7 @@ $(TEST_DATA_VENV):
 	python3 -m venv $(TEST_DATA_VENV)
 	$(TEST_DATA_PIP) install -r test_data/requirements.txt
 
-create-admin-user: ## Create admin user with password from ADMIN_PASSWORD env var
+create-admin-user:
 	@if [ -z "$(ADMIN_EMAIL)" ]; then \
 		echo "Error: ADMIN_EMAIL environment variable is required"; \
 		exit 1; \
@@ -113,7 +113,7 @@ create-admin-user: ## Create admin user with password from ADMIN_PASSWORD env va
 		--region $(AWS_REGION)
 	@echo "Admin user $(ADMIN_EMAIL) created successfully!"
 
-delete-admin-user: ## Delete admin user (requires ADMIN_EMAIL env var)
+delete-admin-user:
 	@if [ -z "$(ADMIN_EMAIL)" ]; then \
 		echo "Error: ADMIN_EMAIL environment variable is required"; \
 		exit 1; \

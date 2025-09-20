@@ -20,5 +20,5 @@
 	rel="noopener noreferrer"
 	class="text-[var(--text-secondary)] transition-colors duration-200 hover:text-[var(--text-primary)] {className}"
 >
-	{@render icon({size})}
+	{@render icon({ size })}
 </a>

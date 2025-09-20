@@ -5,7 +5,6 @@
 @import '@radix-ui/colors/slate-dark.css';
 
 :root {
-	/* Light mode colors */
 	--bg-primary: var(--gray-1);
 	--bg-secondary: var(--gray-2);
 	--bg-hover: var(--gray-3);
@@ -25,7 +24,6 @@
 }
 
 .dark {
-	/* Dark mode colors */
 	--bg-primary: var(--gray-1);
 	--bg-secondary: var(--gray-2);
 	--bg-hover: var(--gray-3);

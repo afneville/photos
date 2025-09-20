@@ -47,7 +47,7 @@
 		} catch (fullscreenError) {
 			console.debug('Could not enter fullscreen:', fullscreenError);
 		}
-		
+
 		onFullScreen(currentPhotoIndex);
 	}
 
@@ -73,7 +73,6 @@
 			return;
 		}
 	}
-
 </script>
 
 <svelte:window on:keydown={handleKeydown} />

@@ -200,9 +200,7 @@
 								class="rounded-full transition-all duration-200 {index === currentIndex
 									? 'h-3 w-3 shadow-lg'
 									: 'h-2 w-2'}"
-								style="background-color: {index === currentIndex
-									? 'white'
-									: '#aaa'};"
+								style="background-color: {index === currentIndex ? 'white' : '#aaa'};"
 								onmouseover={(e) => {
 									if (index !== currentIndex) {
 										e.currentTarget.style.backgroundColor = '#ccc';

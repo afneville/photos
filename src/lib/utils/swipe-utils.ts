@@ -15,7 +15,7 @@ export function createSwipeHandlers(handlers: SwipeHandlers) {
 
 	function handleTouchStart(event: TouchEvent) {
 		if (event.touches.length !== 1) return;
-		
+
 		const touch = event.touches[0];
 		startX = touch.clientX;
 		startY = touch.clientY;
@@ -26,7 +26,7 @@ export function createSwipeHandlers(handlers: SwipeHandlers) {
 
 	function handleTouchMove(event: TouchEvent) {
 		if (!isTracking || event.touches.length !== 1) return;
-		
+
 		const touch = event.touches[0];
 		currentX = touch.clientX;
 		currentY = touch.clientY;
@@ -34,11 +34,11 @@ export function createSwipeHandlers(handlers: SwipeHandlers) {
 
 	function handleTouchEnd() {
 		if (!isTracking) return;
-		
+
 		const deltaX = currentX - startX;
 		const deltaY = Math.abs(currentY - startY);
 		const absDeltaX = Math.abs(deltaX);
-		
+
 		// Check if it's a horizontal swipe with minimal vertical movement
 		if (absDeltaX >= minSwipeDistance && deltaY <= maxVerticalDistance) {
 			if (deltaX > 0 && handlers.onSwipeRight) {
@@ -47,7 +47,7 @@ export function createSwipeHandlers(handlers: SwipeHandlers) {
 				handlers.onSwipeLeft();
 			}
 		}
-		
+
 		isTracking = false;
 	}
 
