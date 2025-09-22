@@ -1,4 +1,3 @@
-# ECR Repository
 resource "aws_ecr_repository" "repository" {
   name                 = var.repository_name
   image_tag_mutability = var.image_tag_mutability
@@ -10,7 +9,6 @@ resource "aws_ecr_repository" "repository" {
   tags = var.tags
 }
 
-# ECR Lifecycle policy to manage image versions
 resource "aws_ecr_lifecycle_policy" "lifecycle" {
   repository = aws_ecr_repository.repository.name
 
@@ -32,22 +30,10 @@ resource "aws_ecr_lifecycle_policy" "lifecycle" {
   })
 }
 
-# ECR authorization token for Docker provider
 data "aws_ecr_authorization_token" "token" {
   count = var.create_placeholder_image ? 1 : 0
 }
 
-# Docker provider configuration for ECR
-provider "docker" {
-  count = var.create_placeholder_image ? 1 : 0
-  registry_auth {
-    address  = data.aws_ecr_authorization_token.token[0].proxy_endpoint
-    username = data.aws_ecr_authorization_token.token[0].user_name
-    password = data.aws_ecr_authorization_token.token[0].password
-  }
-}
-
-# Build placeholder Lambda container image
 resource "docker_image" "placeholder" {
   count = var.create_placeholder_image ? 1 : 0
   name  = "placeholder-lambda:latest"
@@ -60,7 +46,6 @@ resource "docker_image" "placeholder" {
   depends_on = [aws_ecr_repository.repository]
 }
 
-# Tag and push placeholder image to ECR
 resource "docker_tag" "placeholder" {
   count        = var.create_placeholder_image ? 1 : 0
   source_image = docker_image.placeholder[0].name

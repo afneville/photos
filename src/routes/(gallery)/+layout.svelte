@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '../../app.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import Heading from '$lib/components/Heading.svelte';
 	import { ScaleIcon, GitBranchIcon } from '$lib/components/icons';
@@ -10,7 +9,24 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<title>Alexander Neville - Photos</title>
+	<meta name="description" content="Personal Photograph Collection" />
+
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Alexander Neville - Photos" />
+	<meta property="og:description" content="Personal Photograph Collection" />
+	<meta property="og:image" content="/assets/og-image.jpg" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="Personal Photograph Collection" />
+
+	<!-- Twitter -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Photo Gallery" />
+	<meta name="twitter:description" content="Personal Photograph Collection" />
+	<meta name="twitter:image" content="/assets/og-image.jpg" />
+
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link

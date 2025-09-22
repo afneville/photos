@@ -46,6 +46,9 @@ resource "aws_s3_bucket_policy" "processed_bucket_policy" {
 
 module "web_app_ecr" {
   source = "../ecr-repository"
+  providers = {
+    docker = docker
+  }
 
   repository_name             = "photo-gallery-web-app"
   lifecycle_policy_keep_count = 10

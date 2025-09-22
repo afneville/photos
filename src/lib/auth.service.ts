@@ -1,5 +1,5 @@
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
-import { COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { RequestEvent } from '@sveltejs/kit';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,9 +12,9 @@ export class AuthService {
 		this.verifier =
 			verifier ??
 			CognitoJwtVerifier.create({
-				userPoolId: COGNITO_USER_POOL_ID,
+				userPoolId: env.COGNITO_USER_POOL_ID,
 				tokenUse: 'access',
-				clientId: COGNITO_CLIENT_ID
+				clientId: env.COGNITO_CLIENT_ID
 			});
 	}
 

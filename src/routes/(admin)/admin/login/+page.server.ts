@@ -1,8 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { COGNITO_CLIENT_ID, AWS_REGION } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { Actions, PageServerLoad } from './$types';
 import { AuthService } from '$lib/auth.service';
-import { env } from '$env/dynamic/private';
 
 import {
 	CognitoIdentityProviderClient,
@@ -11,7 +10,7 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 
 const cognitoClient = new CognitoIdentityProviderClient({
-	region: AWS_REGION
+	region: env.AWS_REGION
 });
 
 export const load: PageServerLoad = async (event) => {
@@ -39,7 +38,7 @@ export const actions: Actions = {
 		try {
 			const authParams: InitiateAuthCommandInput = {
 				AuthFlow: 'USER_PASSWORD_AUTH',
-				ClientId: COGNITO_CLIENT_ID,
+				ClientId: env.COGNITO_CLIENT_ID,
 				AuthParameters: {
 					USERNAME: email,
 					PASSWORD: password

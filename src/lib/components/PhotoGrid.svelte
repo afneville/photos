@@ -30,7 +30,7 @@
 </script>
 
 {#if photoArrays.length}
-	<div id="photo-grid" class="grid w-full grid-cols-3 justify-center">
+	<div id="photo-grid" class="grid w-full grid-cols-3 justify-start">
 		{#each photoArrays as photo (photo.photoArrayId)}
 			<div
 				class="aspect-square cursor-pointer overflow-hidden border border-[var(--border-normal)] bg-[var(--bg-image)] transition-colors hover:border-[var(--border-strong)]"

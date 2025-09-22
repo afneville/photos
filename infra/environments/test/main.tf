@@ -29,14 +29,21 @@ provider "aws" {
   }
 }
 
+data "aws_ecr_authorization_token" "token" {}
+
 provider "docker" {
-  # Docker provider will be configured by the module
+  registry_auth {
+    address  = data.aws_ecr_authorization_token.token.proxy_endpoint
+    username = data.aws_ecr_authorization_token.token.user_name
+    password = data.aws_ecr_authorization_token.token.password
+  }
 }
 
 module "photo_gallery" {
   source = "../../modules/photo-gallery"
   providers = {
     aws.n-virginia = aws.n-virginia
+    docker         = docker
   }
 
   cloudfront_enabled      = false

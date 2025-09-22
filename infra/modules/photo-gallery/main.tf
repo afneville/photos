@@ -47,6 +47,7 @@ module "cloudfront_hosting" {
   source = "../cloudfront-hosting"
   providers = {
     aws.n-virginia = aws.n-virginia
+    docker         = docker
   }
 
   bucket_name                   = var.processed_bucket_name

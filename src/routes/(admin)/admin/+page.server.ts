@@ -1,5 +1,5 @@
 import { createServerCaller } from '$lib/trpc-caller';
-import { IMAGE_DOMAIN, PHOTO_GALLERY_ID } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { AuthService } from '$lib/auth.service';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -13,8 +13,8 @@ export const load: PageServerLoad = async (event) => {
 
 		return {
 			photoArrays,
-			imageDomain: IMAGE_DOMAIN,
-			galleryId: PHOTO_GALLERY_ID
+			imageDomain: env.IMAGE_DOMAIN,
+			galleryId: env.PHOTO_GALLERY_ID
 		};
 	} catch {
 		throw redirect(302, '/admin/login');

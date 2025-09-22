@@ -6,8 +6,9 @@ terraform {
       configuration_aliases = [aws.n-virginia]
     }
     docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0"
+      source                = "kreuzwerker/docker"
+      version               = "~> 3.0"
+      configuration_aliases = [docker]
     }
   }
 }
