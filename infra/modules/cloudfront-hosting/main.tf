@@ -4,7 +4,7 @@ resource "aws_s3_bucket" "processed_bucket" {
 }
 
 resource "aws_s3_bucket_public_access_block" "processed_bucket_pab" {
-  bucket = aws_s3_bucket.processed_bucket.id
+  bucket                  = aws_s3_bucket.processed_bucket.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -42,6 +42,16 @@ resource "aws_s3_bucket_policy" "processed_bucket_policy" {
   })
 
   depends_on = [aws_s3_bucket_public_access_block.processed_bucket_pab]
+}
+
+module "web_app_ecr" {
+  source = "../ecr-repository"
+
+  repository_name             = "photo-gallery-web-app"
+  lifecycle_policy_keep_count = 10
+  create_placeholder_image    = true
+  dockerfile_context_path     = "../../../serverless/placeholder"
+  tags                        = var.tags
 }
 
 resource "aws_iam_role" "web_app_lambda_role" {
@@ -101,14 +111,13 @@ resource "aws_iam_role_policy" "web_app_lambda_policy" {
   })
 }
 
-# Web app Lambda function
 resource "aws_lambda_function" "web_app" {
   function_name = "photo-gallery-web-app"
   role          = aws_iam_role.web_app_lambda_role.arn
   package_type  = "Image"
-  image_uri     = var.web_app_lambda_image_uri
-  timeout       = 30
-  memory_size   = 512
+  image_uri     = var.web_app_lambda_image_uri != "" ? var.web_app_lambda_image_uri : module.web_app_ecr.repository_uri_with_tag
+  timeout       = var.web_app_timeout
+  memory_size   = var.web_app_memory_size
 
   environment {
     variables = var.web_app_environment_variables
@@ -122,7 +131,6 @@ resource "aws_lambda_function" "web_app" {
   tags = var.tags
 }
 
-# CloudWatch Log Group for web app Lambda
 resource "aws_cloudwatch_log_group" "web_app_logs" {
   name              = "/aws/lambda/photo-gallery-web-app"
   retention_in_days = 7
@@ -130,7 +138,6 @@ resource "aws_cloudwatch_log_group" "web_app_logs" {
   tags = var.tags
 }
 
-# Lambda Function URL for web app
 resource "aws_lambda_function_url" "web_app_url" {
   function_name      = aws_lambda_function.web_app.function_name
   authorization_type = "NONE"
@@ -145,7 +152,6 @@ resource "aws_lambda_function_url" "web_app_url" {
   }
 }
 
-# ACM Certificate for CloudFront (must be in us-east-1)
 resource "aws_acm_certificate" "acm_certificate" {
   provider                  = aws.n-virginia
   domain_name               = var.domain_names[0]
@@ -159,7 +165,6 @@ resource "aws_acm_certificate" "acm_certificate" {
   tags = var.tags
 }
 
-# Route53 records for certificate validation
 resource "aws_route53_record" "domain_validation_options" {
   provider = aws.n-virginia
   for_each = {
@@ -178,7 +183,6 @@ resource "aws_route53_record" "domain_validation_options" {
   zone_id         = data.aws_route53_zone.main.zone_id
 }
 
-# ACM certificate validation
 resource "aws_acm_certificate_validation" "certificate_validation" {
   provider                = aws.n-virginia
   certificate_arn         = aws_acm_certificate.acm_certificate.arn
@@ -189,16 +193,13 @@ resource "aws_acm_certificate_validation" "certificate_validation" {
   }
 }
 
-# CloudFront distribution with dual origins
 resource "aws_cloudfront_distribution" "main" {
-  # S3 origin for static assets
   origin {
     domain_name              = aws_s3_bucket.processed_bucket.bucket_regional_domain_name
     origin_id                = "S3-${var.bucket_name}"
     origin_access_control_id = aws_cloudfront_origin_access_control.s3_oac.id
   }
 
-  # Lambda Function URL origin for web app
   origin {
     domain_name = replace(aws_lambda_function_url.web_app_url.function_url, "https://", "")
     origin_id   = "Lambda-WebApp"
@@ -216,7 +217,6 @@ resource "aws_cloudfront_distribution" "main" {
   default_root_object = "index.html"
   aliases             = var.domain_names
 
-  # Default behavior for web app (Lambda)
   default_cache_behavior {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
@@ -237,7 +237,6 @@ resource "aws_cloudfront_distribution" "main" {
     max_ttl     = 0
   }
 
-  # Cache behavior for static assets (S3)
   ordered_cache_behavior {
     path_pattern           = "/images/*"
     allowed_methods        = ["GET", "HEAD"]
@@ -275,12 +274,10 @@ resource "aws_cloudfront_distribution" "main" {
   depends_on = [aws_acm_certificate_validation.certificate_validation]
 }
 
-# Data source for Route53 hosted zone
 data "aws_route53_zone" "main" {
   name = var.hosted_zone
 }
 
-# Route53 records for CloudFront distribution
 resource "aws_route53_record" "cloudfront_alias" {
   count   = length(var.domain_names)
   zone_id = data.aws_route53_zone.main.zone_id
@@ -294,7 +291,6 @@ resource "aws_route53_record" "cloudfront_alias" {
   }
 }
 
-# Route53 AAAA records for IPv6
 resource "aws_route53_record" "cloudfront_alias_ipv6" {
   count   = length(var.domain_names)
   zone_id = data.aws_route53_zone.main.zone_id

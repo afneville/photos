@@ -78,11 +78,9 @@ module "image_processor" {
   tags                = var.tags
 }
 
-# Cognito User Pool for JWT authentication
 resource "aws_cognito_user_pool" "photo_gallery_user_pool" {
   name = var.cognito_user_pool_name
 
-  # Password policy
   password_policy {
     minimum_length    = 8
     require_lowercase = true
@@ -91,13 +89,10 @@ resource "aws_cognito_user_pool" "photo_gallery_user_pool" {
     require_uppercase = true
   }
 
-  # Username attributes
   username_attributes = ["email"]
 
-  # Auto-verified attributes
   auto_verified_attributes = ["email"]
 
-  # Account recovery settings
   account_recovery_setting {
     recovery_mechanism {
       name     = "verified_email"
@@ -105,7 +100,6 @@ resource "aws_cognito_user_pool" "photo_gallery_user_pool" {
     }
   }
 
-  # Email verification message
   verification_message_template {
     default_email_option = "CONFIRM_WITH_CODE"
     email_subject        = "Verify your photo gallery account"
@@ -115,13 +109,11 @@ resource "aws_cognito_user_pool" "photo_gallery_user_pool" {
   tags = var.tags
 }
 
-# Cognito User Pool Client for JWT tokens
 resource "aws_cognito_user_pool_client" "photo_gallery_client" {
   name            = "${var.cognito_user_pool_name}-client"
   user_pool_id    = aws_cognito_user_pool.photo_gallery_user_pool.id
   generate_secret = false
 
-  # Token validity
   access_token_validity  = 60 # minutes
   id_token_validity      = 60 # minutes
   refresh_token_validity = 30 # days
@@ -132,13 +124,11 @@ resource "aws_cognito_user_pool_client" "photo_gallery_client" {
     refresh_token = "days"
   }
 
-  # Explicit auth flows
   explicit_auth_flows = [
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH"
   ]
 
-  # Prevent user existence errors
   prevent_user_existence_errors = "ENABLED"
 }

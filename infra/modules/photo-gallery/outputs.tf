@@ -48,6 +48,11 @@ output "route53_records" {
   value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].route53_records : []
 }
 
+output "web_app_ecr_repository_url" {
+  description = "URL of the ECR repository for web app container images (only when cloudfront_enabled is true)"
+  value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].web_app_ecr_repository_url : null
+}
+
 output "ecr_repository_url" {
   description = "URL of the ECR repository for Lambda container images"
   value       = module.image_processor.ecr_repository_url

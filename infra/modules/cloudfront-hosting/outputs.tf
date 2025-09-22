@@ -57,3 +57,18 @@ output "acm_certificate_validation_arn" {
   description = "ARN of the validated ACM certificate"
   value       = aws_acm_certificate_validation.certificate_validation.certificate_arn
 }
+
+output "web_app_ecr_repository_url" {
+  description = "URL of the ECR repository for web app container images"
+  value       = module.web_app_ecr.repository_url
+}
+
+output "web_app_ecr_repository_name" {
+  description = "Name of the ECR repository for web app container images"
+  value       = module.web_app_ecr.repository_name
+}
+
+output "web_app_ecr_repository_arn" {
+  description = "ARN of the ECR repository for web app container images"
+  value       = module.web_app_ecr.repository_arn
+}

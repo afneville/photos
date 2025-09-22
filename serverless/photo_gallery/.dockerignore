@@ -1,0 +1,10 @@
+node_modules
+.git
+.svelte-kit
+build
+dist
+.env*
+.DS_Store
+*.log
+coverage
+.nyc_output

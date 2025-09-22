@@ -4,8 +4,9 @@ variable "bucket_name" {
 }
 
 variable "web_app_lambda_image_uri" {
-  description = "ECR image URI for the containerized web application Lambda"
+  description = "ECR image URI for the containerized web application Lambda (defaults to created ECR repo)"
   type        = string
+  default     = ""
 }
 
 variable "web_app_environment_variables" {
@@ -32,6 +33,19 @@ variable "dynamodb_table_arn" {
   description = "ARN of the DynamoDB table for Lambda permissions"
   type        = string
 }
+
+variable "web_app_timeout" {
+  description = "Timeout for the web app Lambda function in seconds"
+  type        = number
+  default     = 60
+}
+
+variable "web_app_memory_size" {
+  description = "Memory size for the web app Lambda function in MB"
+  type        = number
+  default     = 1024
+}
+
 
 variable "tags" {
   description = "Tags to apply to all resources"

@@ -1,16 +1,16 @@
 output "ecr_repository_url" {
   description = "URL of the ECR repository for Lambda container images"
-  value       = aws_ecr_repository.image_processor_repo.repository_url
+  value       = module.ecr_repository.repository_url
 }
 
 output "ecr_repository_name" {
   description = "Name of the ECR repository"
-  value       = aws_ecr_repository.image_processor_repo.name
+  value       = module.ecr_repository.repository_name
 }
 
 output "ecr_repository_arn" {
   description = "ARN of the ECR repository"
-  value       = aws_ecr_repository.image_processor_repo.arn
+  value       = module.ecr_repository.repository_arn
 }
 
 output "lambda_function_name" {
