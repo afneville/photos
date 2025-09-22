@@ -59,3 +59,16 @@ variable "cognito_user_pool_name" {
   description = "Name of the Cognito User Pool for authentication"
   type        = string
 }
+
+variable "web_app_lambda_image_uri" {
+  description = "ECR image URI for the containerized web application Lambda"
+  type        = string
+  default     = ""
+}
+
+variable "web_app_environment_variables" {
+  description = "Environment variables for the web application Lambda"
+  type        = map(string)
+  default     = {}
+}
+

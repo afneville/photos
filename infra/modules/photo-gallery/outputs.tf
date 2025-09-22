@@ -15,17 +15,47 @@ output "staging_bucket_name" {
 
 output "processed_images_endpoint" {
   description = "Endpoint for accessing processed images"
-  value       = var.cloudfront_enabled ? "https://${var.domain_names[0]}" : "http://${module.bucket_hosting[0].website_endpoint}"
+  value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].website_endpoint : "http://${module.bucket_hosting[0].website_endpoint}"
+}
+
+output "cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution (only when cloudfront_enabled is true)"
+  value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].cloudfront_distribution_id : null
+}
+
+output "cloudfront_domain_name" {
+  description = "Domain name of the CloudFront distribution (only when cloudfront_enabled is true)"
+  value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].cloudfront_domain_name : null
+}
+
+output "web_app_lambda_function_name" {
+  description = "Name of the web app Lambda function (only when cloudfront_enabled is true)"
+  value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].web_app_lambda_function_name : null
+}
+
+output "web_app_lambda_function_url" {
+  description = "Function URL of the web app Lambda (only when cloudfront_enabled is true)"
+  value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].web_app_lambda_function_url : null
+}
+
+output "processed_bucket_arn" {
+  description = "ARN of the processed images bucket"
+  value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].bucket_arn : module.bucket_hosting[0].bucket_arn
+}
+
+output "route53_records" {
+  description = "Route53 records created for CloudFront (only when cloudfront_enabled is true and hosted_zone is specified)"
+  value       = var.cloudfront_enabled ? module.cloudfront_hosting[0].route53_records : []
 }
 
 output "ecr_repository_url" {
   description = "URL of the ECR repository for Lambda container images"
-  value       = aws_ecr_repository.image_processor_repo.repository_url
+  value       = module.image_processor.ecr_repository_url
 }
 
 output "lambda_function_name" {
   description = "Name of the Lambda function"
-  value       = aws_lambda_function.image_processor.function_name
+  value       = module.image_processor.lambda_function_name
 }
 
 output "cognito_user_pool_id" {
