@@ -11,7 +11,7 @@ TEST_DATA_VENV := test_data/venv
 TEST_DATA_PYTHON := $(TEST_DATA_VENV)/bin/python
 TEST_DATA_PIP := $(TEST_DATA_VENV)/bin/pip
 
-.PHONY: help build build-container push-container update-lambda test-local generate-test-event clean setup-test-infra populate-test-data clear-test-data process-test-data teardown-test-infra ecr-login create-admin-user delete-admin-user
+.PHONY: help build build-container push-container update-lambda test-local generate-test-event clean setup-test-infra populate-test-data clear-test-data process-test-data teardown-test-infra ecr-login create-admin-user delete-admin-user generate-env
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -127,3 +127,15 @@ delete-admin-user:
 		--username $(ADMIN_EMAIL) \
 		--region $(AWS_REGION)
 	@echo "Admin user $(ADMIN_EMAIL) deleted successfully!"
+
+generate-env:
+	@echo "Generating .env file from terraform outputs..."
+	@echo "STAGING_BUCKET=$(STAGING_BUCKET_NAME)" > ../.env
+	@echo "CLOUD_REGION=$(AWS_REGION)" >> ../.env
+	@echo "DYNAMODB_TABLE=$(DYNAMODB_TABLE_NAME)" >> ../.env
+	@echo "PHOTO_GALLERY_ID=test-gallery" >> ../.env
+	@echo "IMAGE_DOMAIN=$$(cd ../infra/environments/test && terraform output -raw image_serving_endpoint)" >> ../.env
+	@echo "COGNITO_USER_POOL_ID=$(COGNITO_USER_POOL_ID)" >> ../.env
+	@echo "COGNITO_CLIENT_ID=$(COGNITO_USER_POOL_CLIENT_ID)" >> ../.env
+	@echo "ORIGIN=http://localhost:3000" >> ../.env
+	@echo "✅ Generated .env file with terraform outputs"
