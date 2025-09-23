@@ -92,7 +92,10 @@
 						afterRangeKey,
 						targetPosition: toIndex,
 						itemAtTarget: data.photoArrays[toIndex].photoArrayId,
-						itemAfterTarget: toIndex + 1 < data.photoArrays.length ? data.photoArrays[toIndex + 1].photoArrayId : 'none'
+						itemAfterTarget:
+							toIndex + 1 < data.photoArrays.length
+								? data.photoArrays[toIndex + 1].photoArrayId
+								: 'none'
 					});
 				} else {
 					// Moving up - place before the target position
@@ -151,7 +154,7 @@
 		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
 		const x = event.clientX;
 		const y = event.clientY;
-		
+
 		if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
 			if (dragOverIndex === index) {
 				dragOverIndex = null;
@@ -240,15 +243,20 @@
 				{#each data.photoArrays as photoArray, index (photoArray.photoArrayId)}
 					<!-- Drop indicator above current item -->
 					{#if draggedIndex !== null && dragOverIndex === index && draggedIndex > index}
-						<div class="h-1 bg-blue-500 rounded-full mx-4 transition-all duration-200 animate-pulse"></div>
+						<div
+							class="mx-4 h-1 animate-pulse rounded-full bg-blue-500 transition-all duration-200"
+						></div>
 					{/if}
-					
+
 					<div
-						class="rounded-lg border p-6 shadow-sm transition-all duration-200 {draggedIndex === index
-							? 'scale-95 opacity-50 border-gray-300'
+						class="rounded-lg border p-6 shadow-sm transition-all duration-200 {draggedIndex ===
+						index
+							? 'scale-95 border-gray-300 opacity-50'
 							: dragOverIndex === index
 								? 'border-blue-500 bg-blue-50 shadow-lg'
-								: 'border-gray-200 bg-white hover:shadow-md'} {isReordering ? 'cursor-wait' : 'cursor-move'}"
+								: 'border-gray-200 bg-white hover:shadow-md'} {isReordering
+							? 'cursor-wait'
+							: 'cursor-move'}"
 						draggable={!isReordering}
 						ondragstart={(e) => handleDragStart(e, index)}
 						ondragover={(e) => handleDragOver(e, index)}
@@ -306,20 +314,35 @@
 										Reordering...
 									</div>
 								{/if}
-								
+
 								<button
-									class="flex items-center gap-1 rounded-md bg-red-600 px-3 py-1 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+									class="flex items-center gap-1 rounded-md bg-red-600 px-3 py-1 text-sm text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
 									onclick={() => handleDelete(photoArray.photoArrayId)}
 									disabled={isReordering || deletingArrayId === photoArray.photoArrayId}
 									title="Delete photo array"
 								>
 									{#if deletingArrayId === photoArray.photoArrayId}
-										<svg class="h-3 w-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+										<svg
+											class="h-3 w-3 animate-spin"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+											></path>
 										</svg>
 									{:else}
 										<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+											></path>
 										</svg>
 									{/if}
 									{deletingArrayId === photoArray.photoArrayId ? 'Deleting...' : 'Delete'}
@@ -373,15 +396,19 @@
 							</div>
 						{/if}
 					</div>
-					
+
 					<!-- Drop indicator below current item -->
 					{#if draggedIndex !== null && dragOverIndex === index && draggedIndex < index}
-						<div class="h-1 bg-blue-500 rounded-full mx-4 transition-all duration-200 animate-pulse"></div>
+						<div
+							class="mx-4 h-1 animate-pulse rounded-full bg-blue-500 transition-all duration-200"
+						></div>
 					{/if}
-					
+
 					<!-- Drop indicator at the end if dragging to last position -->
 					{#if draggedIndex !== null && dragOverIndex === index && index === data.photoArrays.length - 1}
-						<div class="h-1 bg-blue-500 rounded-full mx-4 transition-all duration-200 animate-pulse"></div>
+						<div
+							class="mx-4 h-1 animate-pulse rounded-full bg-blue-500 transition-all duration-200"
+						></div>
 					{/if}
 				{/each}
 			</div>

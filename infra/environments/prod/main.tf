@@ -51,7 +51,7 @@ module "photo_gallery" {
   metadata_table_name                 = "PhotoGallery"
   staging_bucket_name                 = "staging.photos.afneville.com"
   processed_bucket_name               = "serving.photos.afneville.com"
-  cors_allowed_origins                = ["https://photos.afneville.com"]
+  cors_allowed_origins                = ["*"]
   cognito_user_pool_name              = "PhotoGallery"
   domain_names                        = ["photos.afneville.com"]
   hosted_zone                         = "afneville.com"
@@ -103,5 +103,13 @@ output "cognito_user_pool_client_id" {
 
 output "cognito_user_pool_endpoint" {
   value = module.photo_gallery.cognito_user_pool_endpoint
+}
+
+output "web_app_ecr_repository_url" {
+  value = module.photo_gallery.web_app_ecr_repository_url
+}
+
+output "web_app_lambda_function_name" {
+  value = module.photo_gallery.web_app_lambda_function_name
 }
 

@@ -102,6 +102,15 @@ resource "aws_iam_role_policy" "web_app_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "arn:aws:s3:::${var.staging_bucket_name}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "dynamodb:Query",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
@@ -346,6 +355,46 @@ resource "aws_cloudfront_distribution" "main" {
     min_ttl     = 86400
     default_ttl = 2592000    # 30 days
     max_ttl     = 31536000   # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/assets/*"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 86400
+    default_ttl = 2592000    # 30 days
+    max_ttl     = 31536000   # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/robots.txt"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 3600       # 1 hour
+    default_ttl = 86400      # 1 day
+    max_ttl     = 604800     # 1 week
   }
 
   ordered_cache_behavior {
