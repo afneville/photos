@@ -44,30 +44,28 @@
 		{@render children?.()}
 	</main>
 
-	<footer class="flex items-center justify-center gap-6 py-8">
-		<div class="flex items-center gap-4">
+	<footer class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6 py-8">
+		<a
+			href="https://creativecommons.org/licenses/by-sa/4.0/"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="flex items-center gap-2 leading-none text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+		>
+			<ScaleIcon size="20" />
+			CC BY-SA 4.0
+		</a>
+		{#if BUILD_INFO.commitHash}
 			<a
-				href="https://creativecommons.org/licenses/by-sa/4.0/"
+				href="https://github.com/{BUILD_INFO.githubRepo}/commit/{BUILD_INFO.commitHash}"
 				target="_blank"
 				rel="noopener noreferrer"
 				class="flex items-center gap-2 leading-none text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+				title="View commit on GitHub"
 			>
-				<ScaleIcon size="20" />
-				CC BY-SA 4.0
+				<GitBranchIcon size="20" />
+				{BUILD_INFO.shortCommitHash}
 			</a>
-			{#if BUILD_INFO.commitHash}
-				<a
-					href="https://github.com/{BUILD_INFO.githubRepo}/commit/{BUILD_INFO.commitHash}"
-					target="_blank"
-					rel="noopener noreferrer"
-					class="flex items-center gap-2 leading-none text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
-					title="View commit on GitHub"
-				>
-					<GitBranchIcon size="20" />
-					{BUILD_INFO.shortCommitHash}
-				</a>
-			{/if}
-		</div>
+		{/if}
 		<ThemeToggle />
 	</footer>
 </div>

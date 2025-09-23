@@ -3,6 +3,7 @@
 	import type { PhotoArray } from '$lib/api-types';
 	import { getPhotoContext } from '$lib/contexts/photo-context';
 	import { getImageSrcSet } from '$lib/utils/image-utils';
+	import { lockScroll, unlockScroll } from '$lib/utils/scroll-utils';
 	import { CaretLeftIcon, CaretRightIcon, XIcon, MapPinIcon, CalendarDotsIcon } from './icons';
 	import {
 		createButtonHoverHandlers,
@@ -210,6 +211,9 @@
 	});
 
 	$effect.root(() => {
+		// Lock scroll when fullscreen view opens
+		lockScroll();
+		
 		controlsVisible = true;
 		hideTimeout = setTimeout(() => {
 			controlsVisible = false;
@@ -226,6 +230,8 @@
 		return () => {
 			clearTimeout(hideTimeout);
 			document.removeEventListener('fullscreenchange', handleFullscreenChange);
+			// Unlock scroll when fullscreen view closes
+			unlockScroll();
 		};
 	});
 </script>

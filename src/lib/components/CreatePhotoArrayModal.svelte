@@ -3,6 +3,7 @@
 	import { XIcon } from './icons';
 	import ImageCropTool from './ImageCropTool.svelte';
 	import { getPhotoContext } from '$lib/contexts/photo-context';
+	import { lockScroll, unlockScroll } from '$lib/utils/scroll-utils';
 	import { trpc } from '$lib/trpc-client';
 	import type { PhotoArrayCreationResponse } from '$lib/api-types';
 
@@ -225,6 +226,14 @@
 			isSubmitting = false;
 		}
 	}
+
+	// Lock scroll when modal opens, unlock when it closes
+	$effect(() => {
+		lockScroll();
+		return () => {
+			unlockScroll();
+		};
+	});
 
 	// Cleanup object URLs when component is destroyed
 	$effect(() => {

@@ -2,6 +2,7 @@
 	import { fade, scale } from 'svelte/transition';
 	import PhotoCarousel from './PhotoCarousel.svelte';
 	import { getPhotoContext } from '$lib/contexts/photo-context';
+	import { lockScroll, unlockScroll } from '$lib/utils/scroll-utils';
 	import {
 		XIcon,
 		CaretLeftIcon,
@@ -73,6 +74,14 @@
 			return;
 		}
 	}
+
+	// Lock scroll when modal opens, unlock when it closes
+	$effect(() => {
+		lockScroll();
+		return () => {
+			unlockScroll();
+		};
+	});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -153,12 +162,12 @@
 			style="background-color: var(--bg-modal);"
 		>
 			<div class="flex justify-end">
-				<div class="flex items-center gap-6">
-					<span class="flex items-center gap-2">
+				<div class="flex flex-col sm:flex-row sm:items-center items-end gap-3 sm:gap-6">
+					<span class="flex items-center gap-2 whitespace-nowrap">
 						<MapPinIcon size="20" />
 						{photoArray.location || 'Unknown location'}
 					</span>
-					<span class="flex items-center gap-2">
+					<span class="flex items-center gap-2 whitespace-nowrap">
 						<CalendarDotsIcon size="20" />
 						{new Date(photoArray.timestamp).toLocaleDateString('en-US', {
 							month: 'long',

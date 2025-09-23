@@ -47,3 +47,10 @@ body {
 	background-color: var(--bg-primary);
 	color: var(--text-primary);
 }
+
+/* Scroll lock styles for modals */
+.scroll-locked {
+	position: fixed !important;
+	overflow: hidden !important;
+	width: 100% !important;
+}
