@@ -11,7 +11,7 @@ import {
 	TEST_DYNAMODB_TABLE,
 	TEST_PARTITION_KEY,
 	TEST_STAGING_BUCKET,
-	TEST_AWS_REGION
+	TEST_CLOUD_REGION
 } from './test-setup.js';
 import type { PhotoArray, PhotoArrayInput } from './types.js';
 import {
@@ -25,7 +25,7 @@ vi.mock('$env/dynamic/private', () => ({
 		DYNAMODB_TABLE: TEST_DYNAMODB_TABLE,
 		STAGING_BUCKET: TEST_STAGING_BUCKET,
 		PARTITION_KEY: TEST_PARTITION_KEY,
-		AWS_REGION: TEST_AWS_REGION
+		CLOUD_REGION: TEST_CLOUD_REGION
 	}
 }));
 
@@ -54,7 +54,7 @@ describe('PhotoGalleryService', () => {
 		await startContainer();
 		dynamoDbDocClient = getTestDynamoDbDocClient();
 		s3Client = new S3Client({
-			region: TEST_AWS_REGION,
+			region: TEST_CLOUD_REGION,
 			credentials: {
 				accessKeyId: 'test',
 				secretAccessKey: 'test'

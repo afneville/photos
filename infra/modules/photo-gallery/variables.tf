@@ -72,3 +72,25 @@ variable "web_app_environment_variables" {
   default     = {}
 }
 
+variable "photo_gallery_id" {
+  description = "Photo gallery identifier"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+}
+
+variable "image_processor_function_name" {
+  description = "Name of the image processor Lambda function"
+  type        = string
+  default     = "photo-gallery-image-processor"
+}
+
+variable "image_processor_ecr_repository_name" {
+  description = "Name of the ECR repository for the image processor Lambda"
+  type        = string
+  default     = "photo-gallery-image-processor"
+}
+

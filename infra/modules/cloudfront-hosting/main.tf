@@ -123,12 +123,22 @@ resource "aws_lambda_function" "web_app" {
   memory_size   = var.web_app_memory_size
 
   environment {
-    variables = var.web_app_environment_variables
+    variables = merge(var.web_app_environment_variables, {
+      STAGING_BUCKET       = var.staging_bucket_name
+      CLOUD_REGION        = var.aws_region
+      DYNAMODB_TABLE      = var.dynamodb_table_name
+      PHOTO_GALLERY_ID    = var.photo_gallery_id
+      IMAGE_DOMAIN        = "https://${var.domain_names[0]}"
+      COGNITO_USER_POOL_ID = var.cognito_user_pool_id
+      COGNITO_CLIENT_ID   = var.cognito_user_pool_client_id
+      ORIGIN              = "https://${var.domain_names[0]}"
+    })
   }
 
   depends_on = [
     aws_iam_role_policy.web_app_lambda_policy,
-    aws_cloudwatch_log_group.web_app_logs
+    aws_cloudwatch_log_group.web_app_logs,
+    module.web_app_ecr
   ]
 
   tags = var.tags
@@ -148,11 +158,80 @@ resource "aws_lambda_function_url" "web_app_url" {
   cors {
     allow_credentials = false
     allow_origins     = ["*"]
-    allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_methods     = ["*"]
     allow_headers     = ["*"]
     expose_headers    = ["*"]
     max_age           = 86400
   }
+}
+
+resource "aws_cloudfront_origin_request_policy" "lambda_policy" {
+  name = "lambda-origin-request-policy"
+
+  headers_config {
+    header_behavior = "allExcept"
+    headers {
+      items = ["host"]
+    }
+  }
+
+  query_strings_config {
+    query_string_behavior = "all"
+  }
+
+  cookies_config {
+    cookie_behavior = "all"
+  }
+}
+
+resource "aws_cloudfront_cache_policy" "lambda_cache_policy" {
+  name = "lambda-cache-policy"
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip   = true
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
+  }
+
+  default_ttl = 0
+  max_ttl     = 31536000
+  min_ttl     = 0
+}
+
+resource "aws_cloudfront_cache_policy" "lambda_root_cache_policy" {
+  name = "lambda-root-cache-policy"
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip   = true
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
+  }
+
+  default_ttl = 2592000
+  max_ttl     = 31536000
+  min_ttl     = 86400
 }
 
 resource "aws_acm_certificate" "acm_certificate" {
@@ -204,7 +283,7 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   origin {
-    domain_name = replace(aws_lambda_function_url.web_app_url.function_url, "https://", "")
+    domain_name = replace(replace(aws_lambda_function_url.web_app_url.function_url, "https://", ""), "/", "")
     origin_id   = "Lambda-WebApp"
 
     custom_origin_config {
@@ -215,33 +294,22 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
-  enabled             = true
-  is_ipv6_enabled     = true
-  default_root_object = "index.html"
-  aliases             = var.domain_names
+  enabled         = true
+  is_ipv6_enabled = true
+  aliases         = var.domain_names
 
   default_cache_behavior {
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "Lambda-WebApp"
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-
-    forwarded_values {
-      query_string = true
-      headers      = ["*"]
-      cookies {
-        forward = "all"
-      }
-    }
-
-    min_ttl     = 0
-    default_ttl = 0
-    max_ttl     = 0
+    allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = "Lambda-WebApp"
+    compress                   = true
+    viewer_protocol_policy     = "redirect-to-https"
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.lambda_policy.id
+    cache_policy_id            = aws_cloudfront_cache_policy.lambda_cache_policy.id
   }
 
   ordered_cache_behavior {
-    path_pattern           = "/images/*"
+    path_pattern           = "/photos/*"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "S3-${var.bucket_name}"
@@ -255,9 +323,40 @@ resource "aws_cloudfront_distribution" "main" {
       }
     }
 
-    min_ttl     = 0
-    default_ttl = 86400
-    max_ttl     = 31536000
+    min_ttl     = 86400
+    default_ttl = 2592000    # 30 days
+    max_ttl     = 31536000   # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/_app/*"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-${var.bucket_name}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 86400
+    default_ttl = 2592000    # 30 days
+    max_ttl     = 31536000   # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern             = "/"
+    allowed_methods          = ["GET", "HEAD"]
+    cached_methods           = ["GET", "HEAD"]
+    target_origin_id         = "Lambda-WebApp"
+    compress                 = true
+    viewer_protocol_policy   = "redirect-to-https"
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.lambda_policy.id
+    cache_policy_id          = aws_cloudfront_cache_policy.lambda_root_cache_policy.id
   }
 
   restrictions {

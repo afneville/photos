@@ -56,6 +56,12 @@ module "cloudfront_hosting" {
   domain_names                  = var.domain_names
   hosted_zone                   = var.hosted_zone
   dynamodb_table_arn            = aws_dynamodb_table.gallery_metadata_table.arn
+  dynamodb_table_name           = aws_dynamodb_table.gallery_metadata_table.name
+  staging_bucket_name           = var.staging_bucket_name
+  cognito_user_pool_id          = aws_cognito_user_pool.photo_gallery_user_pool.id
+  cognito_user_pool_client_id   = aws_cognito_user_pool_client.photo_gallery_client.id
+  photo_gallery_id              = var.photo_gallery_id
+  aws_region                    = var.aws_region
   tags                          = var.tags
 }
 
@@ -70,13 +76,15 @@ module "bucket_hosting" {
 module "image_processor" {
   source = "../image-processor"
 
-  staging_bucket_name = var.staging_bucket_name
-  staging_bucket_arn  = aws_s3_bucket.staging_bucket.arn
-  serving_bucket_name = var.processed_bucket_name
-  serving_bucket_arn  = var.cloudfront_enabled ? module.cloudfront_hosting[0].bucket_arn : module.bucket_hosting[0].bucket_arn
-  dynamodb_table_name = aws_dynamodb_table.gallery_metadata_table.name
-  dynamodb_table_arn  = aws_dynamodb_table.gallery_metadata_table.arn
-  tags                = var.tags
+  staging_bucket_name     = var.staging_bucket_name
+  staging_bucket_arn      = aws_s3_bucket.staging_bucket.arn
+  serving_bucket_name     = var.processed_bucket_name
+  serving_bucket_arn      = var.cloudfront_enabled ? module.cloudfront_hosting[0].bucket_arn : module.bucket_hosting[0].bucket_arn
+  dynamodb_table_name     = aws_dynamodb_table.gallery_metadata_table.name
+  dynamodb_table_arn      = aws_dynamodb_table.gallery_metadata_table.arn
+  lambda_function_name    = var.image_processor_function_name
+  ecr_repository_name     = var.image_processor_ecr_repository_name
+  tags                    = var.tags
 }
 
 resource "aws_cognito_user_pool" "photo_gallery_user_pool" {

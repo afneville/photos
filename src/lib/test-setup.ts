@@ -10,7 +10,7 @@ import Docker from 'dockerode';
 export const TEST_DYNAMODB_TABLE = 'test-photo-gallery';
 export const TEST_STAGING_BUCKET = 'test-staging-bucket';
 export const TEST_PARTITION_KEY = 'test-gallery';
-export const TEST_AWS_REGION = 'eu-west-2';
+export const TEST_CLOUD_REGION = 'eu-west-2';
 
 const docker = new Docker();
 let container: Docker.Container | null = null;

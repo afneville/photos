@@ -75,6 +75,9 @@ clear-test-data: $(TEST_DATA_VENV)
 	$(TEST_DATA_PYTHON) test_data/populate_test_table.py clear
 	cd ../infra/environments/test && aws s3 rm s3://$$(terraform output -raw staging_bucket_name) --recursive
 	cd ../infra/environments/test && aws s3 rm s3://$$(terraform output -raw processed_bucket_name) --recursive
+	@echo "Clearing ECR repositories..."
+	@aws ecr list-images --repository-name photo-gallery-image-processor --region $(AWS_REGION) --query 'imageIds[*]' --output json | \
+	aws ecr batch-delete-image --repository-name photo-gallery-image-processor --region $(AWS_REGION) --image-ids file:///dev/stdin || echo "No images to delete in image processor repo"
 
 process-test-data: build generate-lambda-env setup-test-infra populate-test-data
 	@BUCKET=$$(cd ../infra/environments/test && terraform output -raw staging_bucket_name); \

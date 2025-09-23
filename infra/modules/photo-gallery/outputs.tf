@@ -59,8 +59,13 @@ output "ecr_repository_url" {
 }
 
 output "lambda_function_name" {
-  description = "Name of the Lambda function"
+  description = "Name of the image processor Lambda function"
   value       = module.image_processor.lambda_function_name
+}
+
+output "image_processor_ecr_repository_name" {
+  description = "Name of the image processor ECR repository"
+  value       = module.image_processor.ecr_repository_name
 }
 
 output "cognito_user_pool_id" {

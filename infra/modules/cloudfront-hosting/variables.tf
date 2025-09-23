@@ -34,6 +34,36 @@ variable "dynamodb_table_arn" {
   type        = string
 }
 
+variable "dynamodb_table_name" {
+  description = "Name of the DynamoDB table"
+  type        = string
+}
+
+variable "staging_bucket_name" {
+  description = "Name of the staging S3 bucket"
+  type        = string
+}
+
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  type        = string
+}
+
+variable "cognito_user_pool_client_id" {
+  description = "Cognito User Pool Client ID"
+  type        = string
+}
+
+variable "photo_gallery_id" {
+  description = "Photo gallery identifier"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+}
+
 variable "web_app_timeout" {
   description = "Timeout for the web app Lambda function in seconds"
   type        = number

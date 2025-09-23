@@ -9,6 +9,7 @@ terraform {
       version = "~> 3.0"
     }
   }
+  backend "s3" {}
 }
 
 provider "aws" {
@@ -46,18 +47,20 @@ module "photo_gallery" {
     docker         = docker
   }
 
-  cloudfront_enabled                   = false
-  metadata_table_name                  = "PhotoGallery-test"
-  staging_bucket_name                  = "photo-gallery-staging-test"
-  processed_bucket_name                = "photo-gallery-serving-test"
-  cors_allowed_origins                 = ["*"]
-  cognito_user_pool_name               = "photo-gallery-test"
-  photo_gallery_id                     = "test-gallery"
+  cloudfront_enabled                  = true
+  metadata_table_name                 = "PhotoGallery"
+  staging_bucket_name                 = "staging.photos.afneville.com"
+  processed_bucket_name               = "serving.photos.afneville.com"
+  cors_allowed_origins                = ["https://photos.afneville.com"]
+  cognito_user_pool_name              = "PhotoGallery"
+  domain_names                        = ["photos.afneville.com"]
+  hosted_zone                         = "afneville.com"
+  photo_gallery_id                    = "prod-gallery"
   aws_region                          = "eu-west-2"
-  image_processor_function_name        = "photo-gallery-image-processor-test"
-  image_processor_ecr_repository_name  = "photo-gallery-image-processor-test"
+  image_processor_function_name       = "photo-gallery-image-processor"
+  image_processor_ecr_repository_name = "photo-gallery-image-processor"
   tags = {
-    Environment = "test"
+    Environment = "prod"
     Project     = "photo-gallery"
   }
 }

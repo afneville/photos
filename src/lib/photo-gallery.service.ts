@@ -56,8 +56,8 @@ export class PhotoGalleryService {
 		tableName?: string,
 		stagingBucketName?: string
 	) {
-		if (!env.AWS_REGION) {
-			throw new Error('AWS_REGION environment variable must be set');
+		if (!env.CLOUD_REGION) {
+			throw new Error('CLOUD_REGION environment variable must be set');
 		}
 		if (!env.DYNAMODB_TABLE && !tableName) {
 			throw new Error('DYNAMODB_TABLE environment variable or tableName paramater required');
@@ -70,10 +70,10 @@ export class PhotoGalleryService {
 		this.tableName = tableName ? tableName : env.DYNAMODB_TABLE!;
 		this.stagingBucketName = stagingBucketName ? stagingBucketName : env.STAGING_BUCKET!;
 
-		this.s3Client = s3Client ? s3Client : new S3Client({ region: env.AWS_REGION });
+		this.s3Client = s3Client ? s3Client : new S3Client({ region: env.CLOUD_REGION });
 		this.dynamoDbDocClient = dynamoDbDocClient
 			? dynamoDbDocClient
-			: DynamoDBDocumentClient.from(new DynamoDBClient({ region: env.AWS_REGION }));
+			: DynamoDBDocumentClient.from(new DynamoDBClient({ region: env.CLOUD_REGION }));
 	}
 
 	async createItem(
