@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 
-type JwtVerifier = unknown;
+import type { CognitoJwtVerifier } from 'aws-jwt-verify';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JwtVerifier = CognitoJwtVerifier<any, any, any>;
 
 vi.mock('aws-jwt-verify', () => ({
 	CognitoJwtVerifier: {
@@ -35,7 +38,7 @@ describe('AuthService', () => {
 		beforeEach(() => {
 			mockVerifier = {
 				verify: vi.fn()
-			};
+			} as unknown as JwtVerifier;
 
 			authService = new AuthService(mockVerifier);
 			vi.clearAllMocks();
@@ -63,7 +66,7 @@ describe('AuthService', () => {
 
 		describe('isAuthenticated', () => {
 			it('should return true for valid JWT token', async () => {
-				const mockVerify = vi.mocked(mockVerifier.verify);
+				const mockVerify = vi.mocked((mockVerifier as any).verify);
 				mockVerify.mockResolvedValue({});
 
 				const result = await authService.isAuthenticated('valid.jwt.token');
@@ -73,7 +76,7 @@ describe('AuthService', () => {
 			});
 
 			it('should return false for invalid JWT token', async () => {
-				const mockVerify = vi.mocked(mockVerifier.verify);
+				const mockVerify = vi.mocked((mockVerifier as any).verify);
 				mockVerify.mockRejectedValue(new Error('Invalid token'));
 
 				const result = await authService.isAuthenticated('invalid.token');
@@ -85,7 +88,7 @@ describe('AuthService', () => {
 
 		describe('requireAuth', () => {
 			it('should pass for valid authentication', async () => {
-				const mockVerify = vi.mocked(mockVerifier.verify);
+				const mockVerify = vi.mocked((mockVerifier as any).verify);
 				mockVerify.mockResolvedValue({});
 				const event = createMockRequestEvent('valid.jwt.token');
 
@@ -99,7 +102,7 @@ describe('AuthService', () => {
 				await expect(authService.requireAuth(event)).rejects.toThrow(
 					'No authentication token found'
 				);
-				expect(mockVerifier.verify).not.toHaveBeenCalled();
+				expect((mockVerifier as any).verify).not.toHaveBeenCalled();
 			});
 
 			it('should throw error when token is empty string', async () => {
@@ -108,11 +111,11 @@ describe('AuthService', () => {
 				await expect(authService.requireAuth(event)).rejects.toThrow(
 					'No authentication token found'
 				);
-				expect(mockVerifier.verify).not.toHaveBeenCalled();
+				expect((mockVerifier as any).verify).not.toHaveBeenCalled();
 			});
 
 			it('should throw error for invalid token', async () => {
-				const mockVerify = vi.mocked(mockVerifier.verify);
+				const mockVerify = vi.mocked((mockVerifier as any).verify);
 				mockVerify.mockRejectedValue(new Error('Invalid token'));
 				const event = createMockRequestEvent('invalid.token');
 
