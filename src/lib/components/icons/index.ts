@@ -1,3 +1,4 @@
+export { default as AlertCircleIcon } from './AlertCircleIcon.svelte';
 export { default as ArrowsOutSimpleIcon } from './ArrowsOutSimpleIcon.svelte';
 export { default as AtSignIcon } from './AtSignIcon.svelte';
 export { default as CalendarDotsIcon } from './CalendarDotsIcon.svelte';

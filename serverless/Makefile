@@ -3,6 +3,7 @@ PROCESSED_BUCKET_NAME = $(shell cd ../infra/environments/test && terraform outpu
 DYNAMODB_TABLE_NAME = $(shell cd ../infra/environments/test && terraform output -raw dynamodb_table_name)
 ECR_REPOSITORY_URL = $(shell cd ../infra/environments/test && terraform output -raw ecr_repository_url)
 LAMBDA_FUNCTION_NAME = $(shell cd ../infra/environments/test && terraform output -raw lambda_function_name)
+ECR_REPOSITORY_NAME = $(shell cd ../infra/environments/test && terraform output -raw image_processor_ecr_repository_name)
 COGNITO_USER_POOL_ID = $(shell cd ../infra/environments/test && terraform output -raw cognito_user_pool_id)
 COGNITO_USER_POOL_CLIENT_ID = $(shell cd ../infra/environments/test && terraform output -raw cognito_user_pool_client_id)
 AWS_REGION = eu-west-2
@@ -76,8 +77,8 @@ clear-test-data: $(TEST_DATA_VENV)
 	cd ../infra/environments/test && aws s3 rm s3://$$(terraform output -raw staging_bucket_name) --recursive
 	cd ../infra/environments/test && aws s3 rm s3://$$(terraform output -raw processed_bucket_name) --recursive
 	@echo "Clearing ECR repositories..."
-	@aws ecr list-images --repository-name photo-gallery-image-processor --region $(AWS_REGION) --query 'imageIds[*]' --output json | \
-	aws ecr batch-delete-image --repository-name photo-gallery-image-processor --region $(AWS_REGION) --image-ids file:///dev/stdin || echo "No images to delete in image processor repo"
+	@aws ecr list-images --repository-name $(ECR_REPOSITORY_NAME) --region $(AWS_REGION) --query 'imageIds[*]' --output json | \
+	aws ecr batch-delete-image --repository-name $(ECR_REPOSITORY_NAME) --region $(AWS_REGION) --image-ids file:///dev/stdin || echo "No images to delete in image processor repo"
 
 process-test-data: build generate-lambda-env setup-test-infra populate-test-data
 	@BUCKET=$$(cd ../infra/environments/test && terraform output -raw staging_bucket_name); \

@@ -75,7 +75,7 @@
 		}
 	}
 
-	@media (max-width: 480px) {
+	@media (max-width: 400px) {
 		.heading-wrapper {
 			gap: 1rem;
 		}

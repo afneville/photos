@@ -94,7 +94,7 @@ describe('PhotoGalleryService', () => {
 			const created = response.photoArray;
 			expect(created.photoGalleryId).toBe(TEST_PARTITION_KEY);
 			expect(created.photoArrayId).toBeDefined();
-			expect(created.photoUris.size).toBe(input.thumbnailCoordinates.length);
+			expect(created.photoUris.length).toBe(input.thumbnailCoordinates.length);
 			expect(created.timestamp).toBe(input.timestamp);
 			expect(created.processedCount).toBe(0);
 			expect(created.location).toBe(input.location);

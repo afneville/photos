@@ -30,7 +30,7 @@
 </script>
 
 {#if photoArrays.length}
-	<div id="photo-grid" class="grid w-full grid-cols-3 justify-start">
+	<div id="photo-grid" class="mx-auto grid grid-cols-3 justify-center">
 		{#each photoArrays as photo (photo.photoArrayId)}
 			<div
 				class="aspect-square cursor-pointer overflow-hidden border border-[var(--border-normal)] bg-[var(--bg-image)] transition-colors hover:border-[var(--border-strong)]"
@@ -53,9 +53,9 @@
 
 <style>
 	#photo-grid {
-		margin-inline: auto;
 		gap: 1vw;
 		grid-template-columns: repeat(3, 1fr);
+		max-width: 1600px;
 	}
 
 	@media (min-width: calc(3 * 300px + 2vw + 2rem)) {

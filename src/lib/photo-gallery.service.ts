@@ -85,9 +85,9 @@ export class PhotoGalleryService {
 		try {
 			const photoArrayId: string = generateKeyBetween(afterRangeKey, beforeRangeKey);
 
-			const photoUris = new Set<string>();
+			const photoUris: string[] = [];
 			for (let i = 0; i < inputItem.thumbnailCoordinates.length; i++) {
-				photoUris.add(uuidv4());
+				photoUris.push(uuidv4());
 			}
 
 			const item: PhotoArray = {
@@ -107,7 +107,7 @@ export class PhotoGalleryService {
 			);
 
 			const presignedUrls: string[] = [];
-			const photoUriArray = Array.from(photoUris);
+			const photoUriArray = photoUris;
 			for (let i = 0; i < photoUriArray.length; i++) {
 				const photoUri = photoUriArray[i];
 				const coords = inputItem.thumbnailCoordinates[i];

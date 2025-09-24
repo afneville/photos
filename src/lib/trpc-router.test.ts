@@ -29,7 +29,7 @@ describe('tRPC Router with Authentication', () => {
 	const DEFAULT_PHOTO_ARRAY_ID = 'test-array-id';
 	const DEFAULT_TIMESTAMP = '2023-01-01T00:00:00Z';
 	const DEFAULT_LOCATION = 'test-location';
-	const DEFAULT_URIS = new Set(['uri1', 'uri2']);
+
 	const DEFAULT_THUMBNAIL_COORDINATES = [
 		{ x: 10, y: 20, w: 100, h: 150 },
 		{ x: 50, y: 80, w: 200, h: 300 }
@@ -39,7 +39,7 @@ describe('tRPC Router with Authentication', () => {
 	const DEFAULT_DB_PHOTO_ARRAY: DbTypes.PhotoArray = {
 		photoGalleryId: TEST_GALLERY_ID,
 		photoArrayId: DEFAULT_PHOTO_ARRAY_ID,
-		photoUris: DEFAULT_URIS,
+		photoUris: ['uri1', 'uri2'],
 		timestamp: DEFAULT_TIMESTAMP,
 		processedCount: 0,
 		location: DEFAULT_LOCATION
@@ -164,21 +164,21 @@ describe('tRPC Router with Authentication', () => {
 				const fullyProcessedArray: DbTypes.PhotoArray = {
 					...DEFAULT_DB_PHOTO_ARRAY,
 					photoArrayId: 'fully-processed',
-					photoUris: new Set(['uri1', 'uri2']),
+					photoUris: ['uri1', 'uri2'],
 					processedCount: 2
 				};
 
 				const partiallyProcessedArray: DbTypes.PhotoArray = {
 					...DEFAULT_DB_PHOTO_ARRAY,
 					photoArrayId: 'partially-processed',
-					photoUris: new Set(['uri1', 'uri2', 'uri3']),
+					photoUris: ['uri1', 'uri2', 'uri3'],
 					processedCount: 1
 				};
 
 				const unprocessedArray: DbTypes.PhotoArray = {
 					...DEFAULT_DB_PHOTO_ARRAY,
 					photoArrayId: 'unprocessed',
-					photoUris: new Set(['uri1', 'uri2']),
+					photoUris: ['uri1', 'uri2'],
 					processedCount: 0
 				};
 

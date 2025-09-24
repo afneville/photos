@@ -1,7 +1,7 @@
 export interface PhotoArray {
 	photoGalleryId: string;
 	photoArrayId: string;
-	photoUris: Set<string>;
+	photoUris: string[];
 	timestamp: string;
 	processedCount: number;
 	location: string;
@@ -26,7 +26,7 @@ export interface PhotoArrayCreationResponse {
 }
 
 export interface PhotoArrayUpdate {
-	photoUris?: Set<string>;
+	photoUris?: string[];
 	processedCount?: number;
 	location?: string;
 }

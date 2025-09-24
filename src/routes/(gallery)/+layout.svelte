@@ -2,7 +2,7 @@
 	import '../../app.css';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import Heading from '$lib/components/Heading.svelte';
-	import { ScaleIcon, GitBranchIcon } from '$lib/components/icons';
+	import { AlertCircleIcon, ScaleIcon, GitBranchIcon } from '$lib/components/icons';
 	import { BUILD_INFO } from '$lib/utils/build-info';
 
 	let { children } = $props();
@@ -40,6 +40,16 @@
 <div class="app-container">
 	<header>
 		<Heading />
+		<div
+			class="mx-4 my-8 flex items-start justify-center gap-2 text-sm"
+			style="color: var(--warning-text-color);"
+		>
+			<AlertCircleIcon class="h-5 w-5 flex-shrink-0" />
+			<span
+				>Please not that this project is currently beta software; you may experience unexpected
+				behaviour.</span
+			>
+		</div>
 	</header>
 
 	<main>

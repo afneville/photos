@@ -96,7 +96,7 @@ export function toApiType(dbItem: DbTypes.PhotoArray): PhotoArray {
 	const { photoGalleryId, ...apiItem } = dbItem;
 	return {
 		...apiItem,
-		photoUris: Array.from(dbItem.photoUris)
+		photoUris: dbItem.photoUris
 	};
 }
 
@@ -109,6 +109,6 @@ export function toDbInputType(apiInput: PhotoArrayInput): DbTypes.PhotoArrayInpu
 export function toDbUpdateType(apiUpdate: PhotoArrayUpdate): DbTypes.PhotoArrayUpdate {
 	return {
 		...apiUpdate,
-		photoUris: apiUpdate.photoUris ? new Set(apiUpdate.photoUris) : undefined
+		photoUris: apiUpdate.photoUris
 	};
 }

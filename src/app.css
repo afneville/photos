@@ -3,6 +3,8 @@
 @import '@radix-ui/colors/gray-dark.css';
 @import '@radix-ui/colors/slate.css';
 @import '@radix-ui/colors/slate-dark.css';
+@import '@radix-ui/colors/orange.css';
+@import '@radix-ui/colors/orange-dark.css';
 
 @font-face {
 	font-family: 'Iosevka Aile Web';
@@ -39,6 +41,7 @@
 	--text-secondary: var(--gray-11);
 	--text-muted: var(--gray-9);
 	--text-inverse: white;
+	--warning-text-color: var(--orange-10);
 
 	--border-subtle: var(--gray-6);
 	--border-normal: var(--gray-7);
@@ -58,6 +61,7 @@
 	--text-secondary: var(--gray-11);
 	--text-muted: var(--gray-9);
 	--text-inverse: var(--gray-1);
+	--warning-text-color: var(--orange-11);
 
 	--border-subtle: var(--gray-6);
 	--border-normal: var(--gray-7);
