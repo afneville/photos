@@ -46,7 +46,7 @@
 		>
 			<AlertCircleIcon class="h-5 w-5 flex-shrink-0" />
 			<span
-				>Please not that this project is currently beta software; you may experience unexpected
+				>Please note that this project is currently beta software; you may experience unexpected
 				behaviour.</span
 			>
 		</div>
