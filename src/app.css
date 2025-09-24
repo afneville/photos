@@ -4,6 +4,30 @@
 @import '@radix-ui/colors/slate.css';
 @import '@radix-ui/colors/slate-dark.css';
 
+@font-face {
+	font-family: 'Iosevka Aile Web';
+	font-style: normal;
+	font-weight: 300;
+	font-display: swap;
+	src: url('/assets/fonts/WOFF2/IosevkaAile-Light.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Iosevka Aile Web';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/assets/fonts/WOFF2/IosevkaAile-Regular.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Iosevka Aile Web';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('/assets/fonts/WOFF2/IosevkaAile-Bold.woff2') format('woff2');
+}
+
 :root {
 	--bg-primary: var(--gray-1);
 	--bg-secondary: var(--gray-2);
@@ -43,7 +67,11 @@
 }
 
 body {
-	font-family: 'Roboto', sans-serif;
+	font-family:
+		'Iosevka Aile Web',
+		system-ui,
+		-apple-system,
+		sans-serif;
 	background-color: var(--bg-primary);
 	color: var(--text-primary);
 }

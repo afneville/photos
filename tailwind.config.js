@@ -6,7 +6,11 @@ export default {
 	darkMode: 'class',
 	theme: {
 		extend: {
-			colors: {}
+			colors: {},
+			fontFamily: {
+				sans: ['Iosevka Aile Web', 'system-ui', '-apple-system', 'sans-serif'],
+				iosevka: ['Iosevka Aile Web', 'system-ui', '-apple-system', 'sans-serif']
+			}
 		}
 	},
 	plugins: [
