@@ -33,14 +33,12 @@
 	const hasPreviousArray = $derived(photoArrayIndex > 0);
 	const hasNextArray = $derived(photoArrayIndex < photoArrays.length - 1);
 
-	// Modal dimensions
-	const modalMaxWidth = 1152; // px
-	const modalMargin = 32; // 2rem = 32px
-	const headerHeight = 128; // 8rem = 128px
+	const modalMaxWidth = 1152;
+	const modalMargin = 32;
+	const headerHeight = 128;
 
 	async function openFullScreen() {
 		try {
-			// Request fullscreen from user interaction
 			const elem = document.documentElement;
 			if (elem.requestFullscreen) {
 				await elem.requestFullscreen();
@@ -70,12 +68,10 @@
 		if (event.key === 'Escape') {
 			onClose();
 		} else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-			// Let the PhotoCarousel handle these keys
 			return;
 		}
 	}
 
-	// Lock scroll when modal opens, unlock when it closes
 	$effect(() => {
 		lockScroll();
 		return () => {
@@ -83,29 +79,6 @@
 		};
 	});
 </script>
-
-<style>
-	.modal-content {
-		/* Normal height behavior */
-		width: min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3));
-		height: min(90vh, calc(min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3)) * 3 / 4 + var(--header-height)));
-		margin: var(--modal-margin);
-	}
-
-	/* When height is very constrained, prioritize 4:3 image + header only */
-	@media (max-height: 600px) {
-		.modal-content {
-			/* Calculate size to fit 4:3 image + 64px header + margins */
-			width: min(90vw, calc((90vh - 64px - 32px) * 4 / 3));
-			height: calc(90vh - 16px);
-			margin: 8px;
-		}
-		
-		.modal-footer {
-			display: none;
-		}
-	}
-</style>
 
 <svelte:window on:keydown={handleKeydown} />
 
@@ -182,14 +155,18 @@
 			style="background-color: var(--bg-modal);"
 		>
 			<div class="flex justify-end">
-				<div class="flex flex-wrap justify-end items-center gap-3 lg:gap-6">
-					<span class="flex items-center gap-2 whitespace-nowrap text-sm text-[var(--text-secondary)]">
+				<div class="flex flex-wrap items-center justify-end gap-3 lg:gap-6">
+					<span
+						class="flex items-center gap-2 text-sm whitespace-nowrap text-[var(--text-secondary)]"
+					>
 						<span style="color: var(--text-primary);">
 							<MapPinIcon size="1.125rem" />
 						</span>
 						{photoArray.location || 'Unknown location'}
 					</span>
-					<span class="flex items-center gap-2 whitespace-nowrap text-sm text-[var(--text-secondary)]">
+					<span
+						class="flex items-center gap-2 text-sm whitespace-nowrap text-[var(--text-secondary)]"
+					>
 						<span style="color: var(--text-primary);">
 							<CalendarDotsIcon size="1.125rem" />
 						</span>
@@ -203,3 +180,29 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.modal-content {
+		width: min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3));
+		height: min(
+			90vh,
+			calc(
+				min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3)) * 3 /
+					4 + var(--header-height)
+			)
+		);
+		margin: var(--modal-margin);
+	}
+
+	@media (max-height: 600px) {
+		.modal-content {
+			width: min(90vw, calc((90vh - 64px - 32px) * 4 / 3));
+			height: calc(90vh - 16px);
+			margin: 8px;
+		}
+
+		.modal-footer {
+			display: none;
+		}
+	}
+</style>

@@ -1,4 +1,14 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, afterEach } from 'vitest';
+import {
+	describe,
+	it,
+	expect,
+	beforeAll,
+	afterAll,
+	beforeEach,
+	vi,
+	afterEach,
+	type Mock
+} from 'vitest';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -104,7 +114,7 @@ describe('PhotoGalleryService', () => {
 				]
 			};
 			const mockPresignedUrl = 'https://mock-url.com/test.jpg';
-			(getSignedUrl as vi.Mock).mockResolvedValue(mockPresignedUrl);
+			(getSignedUrl as Mock).mockResolvedValue(mockPresignedUrl);
 
 			const response = await service.createItem(TEST_PARTITION_KEY, input);
 
@@ -112,14 +122,12 @@ describe('PhotoGalleryService', () => {
 			expect(response.presignedUrls.every((url) => url === mockPresignedUrl)).toBe(true);
 			expect(getSignedUrl).toHaveBeenCalledTimes(3);
 
-			// Check that S3 keys contain the expected coordinates
-			const mockCalls = (getSignedUrl as vi.Mock).mock.calls;
-			mockCalls.forEach((call, index) => {
+			const mockCalls = (getSignedUrl as Mock).mock.calls;
+			mockCalls.forEach((call: unknown[], index: number) => {
 				const putObjectCommand = call[1] as PutObjectCommand;
 				const key = putObjectCommand.input.Key;
 				const expectedCoords = input.thumbnailCoordinates[index];
 
-				// Key should be: galleryId/photoArrayId/uuid/x:y:w:h
 				expect(key).toMatch(
 					new RegExp(
 						`^${TEST_PARTITION_KEY}/[^/]+/[0-9a-f-]{36}/${expectedCoords.x}:${expectedCoords.y}:${expectedCoords.w}:${expectedCoords.h}$`

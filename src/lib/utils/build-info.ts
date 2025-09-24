@@ -1,4 +1,3 @@
-// Global variable injected by Vite plugin at build time
 declare global {
 	const __BUILD_INFO__: {
 		commitHash: string;

@@ -1,8 +1,5 @@
 import { SvelteSet } from 'svelte/reactivity';
 
-/**
- * Reusable image preloader with caching
- */
 export class ImagePreloader {
 	private prefetchedImages = new SvelteSet<string>();
 
@@ -25,10 +22,10 @@ export class ImagePreloader {
 					await img.decode();
 					resolve();
 				} catch {
-					resolve(); // Fallback if decode fails
+					resolve();
 				}
 			};
-			img.onerror = () => resolve(); // Fallback if load fails
+			img.onerror = () => resolve();
 			img.srcset = srcset;
 			if (sizes) {
 				img.sizes = sizes;

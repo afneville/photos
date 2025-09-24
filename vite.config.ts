@@ -4,5 +4,9 @@ import { defineConfig } from 'vite';
 import { buildInfoPlugin } from './vite-plugin-build-info.js';
 
 export default defineConfig({
-	plugins: [buildInfoPlugin(), tailwindcss(), sveltekit()]
+	plugins: [buildInfoPlugin(), tailwindcss(), sveltekit()],
+	test: {
+		globals: true,
+		environment: 'node'
+	}
 });

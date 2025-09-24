@@ -6,9 +6,7 @@ export default {
 	darkMode: 'class',
 	theme: {
 		extend: {
-			colors: {
-				// Radix colors will be added via CSS variables
-			}
+			colors: {}
 		}
 	},
 	plugins: [

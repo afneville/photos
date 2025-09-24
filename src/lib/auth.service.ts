@@ -22,7 +22,7 @@ export class AuthService {
 		try {
 			await this.verifier.verify(token);
 			return true;
-		} catch (error) {
+		} catch {
 			return false;
 		}
 	}

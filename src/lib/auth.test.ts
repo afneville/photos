@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RequestEvent } from '@sveltejs/kit';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type JwtVerifier = any;
+type JwtVerifier = unknown;
 
 vi.mock('aws-jwt-verify', () => ({
 	CognitoJwtVerifier: {

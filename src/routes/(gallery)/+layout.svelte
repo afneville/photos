@@ -12,7 +12,6 @@
 	<title>Alexander Neville - Photos</title>
 	<meta name="description" content="Personal Photograph Collection" />
 
-	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://photos.afneville.com/" />
 	<meta property="og:site_name" content="Alexander Neville - Photos" />
@@ -25,7 +24,6 @@
 	<meta property="og:image:height" content="630" />
 	<meta property="og:image:alt" content="Personal Photograph Collection" />
 
-	<!-- Twitter -->
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="Photo Gallery" />
 	<meta name="twitter:description" content="Personal Photograph Collection" />
@@ -48,7 +46,7 @@
 		{@render children?.()}
 	</main>
 
-	<footer class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 lg:gap-6 py-8">
+	<footer class="flex flex-wrap items-center justify-center gap-3 py-8 sm:gap-4 lg:gap-6">
 		<a
 			href="https://creativecommons.org/licenses/by-sa/4.0/"
 			target="_blank"

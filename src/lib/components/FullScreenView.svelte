@@ -134,13 +134,12 @@
 	}
 
 	function handleMouseMove(event: MouseEvent) {
-		// Only show controls on actual mouse movement, not touch events
-		if (event.pointerType === 'mouse' || !('ontouchstart' in window)) {
+		if ((event as PointerEvent).pointerType === 'mouse' || !('ontouchstart' in window)) {
 			showControlsTemporarily();
 		}
 	}
 
-	function handleClick(event: MouseEvent) {
+	function handleClick() {
 		if (controlsVisible) {
 			controlsVisible = false;
 			clearTimeout(hideTimeout);
@@ -211,9 +210,8 @@
 	});
 
 	$effect.root(() => {
-		// Lock scroll when fullscreen view opens
 		lockScroll();
-		
+
 		controlsVisible = true;
 		hideTimeout = setTimeout(() => {
 			controlsVisible = false;
@@ -230,7 +228,6 @@
 		return () => {
 			clearTimeout(hideTimeout);
 			document.removeEventListener('fullscreenchange', handleFullscreenChange);
-			// Unlock scroll when fullscreen view closes
 			unlockScroll();
 		};
 	});

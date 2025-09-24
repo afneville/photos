@@ -16,13 +16,13 @@ import type * as DbTypes from './types.js';
 import type { IPhotoGalleryService } from './types.js';
 import type { RequestEvent } from '@sveltejs/kit';
 
-// Mock the auth module
 vi.mock('./auth.service.js', () => ({
 	isAuthenticated: vi.fn()
 }));
 
-import { isAuthenticated } from './auth.js';
-const mockIsAuthenticated = vi.mocked(isAuthenticated);
+import type { AuthService } from './auth.service.js';
+
+const mockIsAuthenticated = vi.fn();
 
 describe('tRPC Router with Authentication', () => {
 	const DEFAULT_URI_LIST = ['uri1', 'uri2'];
@@ -93,7 +93,7 @@ describe('tRPC Router with Authentication', () => {
 			isAuthenticated: mockIsAuthenticated,
 			getTokenFromCookies: vi.fn().mockReturnValue(token || null),
 			requireAuth: vi.fn()
-		};
+		} as unknown as AuthService;
 
 		return createCaller({
 			photoGalleryService: mockPhotoGalleryService,
@@ -114,7 +114,6 @@ describe('tRPC Router with Authentication', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Default behavior - 'valid-token' is authenticated, anything else is not
 		mockIsAuthenticated.mockImplementation(async (token: string) => {
 			return token === 'valid-token';
 		});
@@ -193,7 +192,6 @@ describe('tRPC Router with Authentication', () => {
 
 				const result = await caller.getPublicItems({});
 
-				// Only the fully processed array should be returned
 				expect(result).toEqual([
 					{
 						photoArrayId: 'fully-processed',

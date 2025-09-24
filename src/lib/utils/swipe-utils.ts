@@ -39,7 +39,6 @@ export function createSwipeHandlers(handlers: SwipeHandlers) {
 		const deltaY = Math.abs(currentY - startY);
 		const absDeltaX = Math.abs(deltaX);
 
-		// Check if it's a horizontal swipe with minimal vertical movement
 		if (absDeltaX >= minSwipeDistance && deltaY <= maxVerticalDistance) {
 			if (deltaX > 0 && handlers.onSwipeRight) {
 				handlers.onSwipeRight();

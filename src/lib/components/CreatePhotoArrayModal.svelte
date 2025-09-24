@@ -18,9 +18,8 @@
 	const photoContext = getPhotoContext();
 	const { photoArrays } = photoContext;
 
-	// Form state
 	let location = $state('');
-	let selectedMonth = $state(new Date().getMonth() + 1); // 1-based month
+	let selectedMonth = $state(new Date().getMonth() + 1);
 	let selectedYear = $state(new Date().getFullYear());
 	let uploadedImages: Array<{
 		id: string;
@@ -31,9 +30,10 @@
 	}> = $state([]);
 	let selectedImageId = $state<string | null>(null);
 	let isSubmitting = $state(false);
-	let imageCropToolRef = $state<HTMLElement>();
+	let imageCropToolRef = $state<{
+		getPixelCoordinates(): { x: number; y: number; w: number; h: number } | null;
+	}>();
 
-	// Generate default timestamp (1st of the month at noon)
 	function getTimestamp() {
 		const date = new Date(selectedYear, selectedMonth - 1, 1, 12, 0, 0);
 		return date.toISOString();
@@ -58,11 +58,10 @@
 					id,
 					file,
 					url,
-					cropCoords: { x: 25, y: 25, size: 50 } // Default centered crop
+					cropCoords: { x: 25, y: 25, size: 50 }
 				};
 				uploadedImages.push(newImage);
 
-				// Auto-select first uploaded image
 				if (uploadedImages.length === 1) {
 					selectedImageId = id;
 				}
@@ -76,7 +75,6 @@
 			URL.revokeObjectURL(uploadedImages[index].url);
 			uploadedImages.splice(index, 1);
 
-			// Update selection if the removed image was selected
 			if (selectedImageId === id) {
 				selectedImageId = uploadedImages.length > 0 ? uploadedImages[0].id : null;
 			}
@@ -92,7 +90,6 @@
 		if (image) {
 			image.cropCoords = coords;
 
-			// Also store pixel coordinates if available
 			if (imageCropToolRef) {
 				const pixelCoords = imageCropToolRef.getPixelCoordinates();
 				if (pixelCoords) {
@@ -102,10 +99,8 @@
 		}
 	}
 
-	// Get the currently selected image
 	const selectedImage = $derived(uploadedImages.find((img) => img.id === selectedImageId));
 
-	// Drag and drop state
 	let draggedIndex = $state<number | null>(null);
 
 	function handleDragStart(event: DragEvent, index: number) {
@@ -123,7 +118,6 @@
 		event.preventDefault();
 		if (draggedIndex === null || draggedIndex === dropIndex) return;
 
-		// Reorder the images array
 		const draggedItem = uploadedImages[draggedIndex];
 		uploadedImages.splice(draggedIndex, 1);
 		uploadedImages.splice(dropIndex, 0, draggedItem);
@@ -135,29 +129,24 @@
 		draggedIndex = null;
 	}
 
-	// Get the alphabetically first key from existing images
 	function getFirstExistingKey(): string | undefined {
 		if (photoArrays.length === 0) {
 			return undefined;
 		}
 
-		// Get the alphabetically first key from existing images
 		const sortedKeys = photoArrays.map((array) => array.photoArrayId).sort();
 
 		return sortedKeys[0];
 	}
 
-	// Get pixel coordinates for an image
 	function getPixelCoordsForImage(imageId: string) {
 		const image = uploadedImages.find((img) => img.id === imageId);
 		if (!image) return null;
 
-		// First priority: use stored pixel coordinates if available
 		if (image.pixelCoords) {
 			return image.pixelCoords;
 		}
 
-		// Second priority: if this is the currently selected image, get live pixel coordinates
 		if (imageId === selectedImageId && imageCropToolRef) {
 			const pixelCoords = imageCropToolRef.getPixelCoordinates();
 			if (pixelCoords) {
@@ -165,7 +154,6 @@
 			}
 		}
 
-		// Fallback: convert percentage to normalized coordinates (0-1)
 		return {
 			x: image.cropCoords.x / 100,
 			y: image.cropCoords.y / 100,
@@ -180,12 +168,10 @@
 		isSubmitting = true;
 
 		try {
-			// Convert crop coordinates to the format expected by the API
 			const thumbnailCoordinates = uploadedImages
 				.map((image) => getPixelCoordsForImage(image.id))
 				.filter((coords) => coords !== null);
 
-			// Get the alphabetically first key from existing arrays to place new array before it
 			const beforeRangeKey = getFirstExistingKey();
 
 			const result: PhotoArrayCreationResponse = await trpc.createItem.mutate({
@@ -198,7 +184,6 @@
 				afterRangeKey: undefined
 			});
 
-			// Upload images to the presigned URLs
 			if (result.presignedUrls.length === uploadedImages.length) {
 				const uploadPromises = uploadedImages.map(async (image, index) => {
 					const response = await fetch(result.presignedUrls[index], {
@@ -227,7 +212,6 @@
 		}
 	}
 
-	// Lock scroll when modal opens, unlock when it closes
 	$effect(() => {
 		lockScroll();
 		return () => {
@@ -235,7 +219,6 @@
 		};
 	});
 
-	// Cleanup object URLs when component is destroyed
 	$effect(() => {
 		return () => {
 			uploadedImages.forEach((image) => {
@@ -259,7 +242,6 @@
 		in:scale={{ duration: 300, start: 0.95 }}
 		out:scale={{ duration: 300, start: 0.95 }}
 	>
-		<!-- Header -->
 		<div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
 			<h2 class="text-xl font-semibold text-gray-900">Create New Photo Array</h2>
 			<button
@@ -271,10 +253,8 @@
 			</button>
 		</div>
 
-		<!-- Content -->
 		<div class="flex-1 overflow-y-auto p-6">
 			<div class="space-y-6">
-				<!-- Location Input -->
 				<div>
 					<label for="location" class="mb-2 block text-sm font-medium text-gray-700">
 						Location
@@ -288,7 +268,6 @@
 					/>
 				</div>
 
-				<!-- Date Selection -->
 				<div>
 					<label for="date-inputs" class="mb-2 block text-sm font-medium text-gray-700">Date</label>
 					<div id="date-inputs" class="flex gap-4">
@@ -323,7 +302,6 @@
 					</p>
 				</div>
 
-				<!-- Image Upload -->
 				<div>
 					<label for="images" class="mb-2 block text-sm font-medium text-gray-700">
 						Upload Images
@@ -338,7 +316,6 @@
 					/>
 				</div>
 
-				<!-- Uploaded Images -->
 				{#if uploadedImages.length > 0}
 					<div>
 						<h3 class="mb-3 text-sm font-medium text-gray-700">
@@ -375,7 +352,6 @@
 									>
 										×
 									</button>
-									<!-- Drag handle indicator -->
 									<div
 										class="pointer-events-none absolute right-0 bottom-0 flex h-3 w-3 items-center justify-center bg-gray-400 text-xs text-white opacity-50"
 									>
@@ -387,7 +363,6 @@
 					</div>
 				{/if}
 
-				<!-- Image Crop Tool -->
 				{#if selectedImage}
 					<div>
 						<h3 class="mb-3 text-sm font-medium text-gray-700">
@@ -411,7 +386,6 @@
 			</div>
 		</div>
 
-		<!-- Footer -->
 		<div class="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
 			<button
 				class="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
