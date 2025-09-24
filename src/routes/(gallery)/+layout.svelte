@@ -14,9 +14,13 @@
 
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://photos.afneville.com/" />
+	<meta property="og:site_name" content="Alexander Neville - Photos" />
 	<meta property="og:title" content="Alexander Neville - Photos" />
 	<meta property="og:description" content="Personal Photograph Collection" />
-	<meta property="og:image" content="/assets/og-image.jpg" />
+	<meta property="og:image" content="https://photos.afneville.com/assets/og-image.jpg" />
+	<meta property="og:image:secure_url" content="https://photos.afneville.com/assets/og-image.jpg" />
+	<meta property="og:image:type" content="image/jpeg" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta property="og:image:alt" content="Personal Photograph Collection" />
@@ -25,7 +29,7 @@
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="Photo Gallery" />
 	<meta name="twitter:description" content="Personal Photograph Collection" />
-	<meta name="twitter:image" content="/assets/og-image.jpg" />
+	<meta name="twitter:image" content="https://photos.afneville.com/assets/og-image.jpg" />
 
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
