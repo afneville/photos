@@ -84,6 +84,29 @@
 	});
 </script>
 
+<style>
+	.modal-content {
+		/* Normal height behavior */
+		width: min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3));
+		height: min(90vh, calc(min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3)) * 3 / 4 + var(--header-height)));
+		margin: var(--modal-margin);
+	}
+
+	/* When height is very constrained, prioritize 4:3 image + header only */
+	@media (max-height: 600px) {
+		.modal-content {
+			/* Calculate size to fit 4:3 image + 64px header + margins */
+			width: min(90vw, calc((90vh - 64px - 32px) * 4 / 3));
+			height: calc(90vh - 16px);
+			margin: 8px;
+		}
+		
+		.modal-footer {
+			display: none;
+		}
+	}
+</style>
+
 <svelte:window on:keydown={handleKeydown} />
 
 <div
@@ -95,15 +118,12 @@
 	out:fade={{ duration: 300 }}
 >
 	<div
-		class="relative flex flex-col overflow-hidden rounded-lg border border-[var(--border-normal)] shadow-2xl"
+		class="modal-content relative flex flex-col overflow-hidden rounded-lg border border-[var(--border-normal)] shadow-2xl"
 		style="
 			background-color: var(--bg-modal);
 			--modal-max-width: {modalMaxWidth}px;
 			--modal-margin: {modalMargin}px;
 			--header-height: {headerHeight}px;
-			width: min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3));
-			height: min(90vh, calc(min(min(90vw, var(--modal-max-width)), calc((90vh - var(--header-height)) * 4 / 3)) * 3 / 4 + var(--header-height)));
-			margin: var(--modal-margin);
 		"
 		in:scale={{ duration: 300, start: 0.1 }}
 		out:scale={{ duration: 300, start: 0.1 }}
@@ -158,17 +178,21 @@
 		</div>
 
 		<div
-			class="relative z-10 flex-shrink-0 border-t border-[var(--border-normal)] p-4"
+			class="modal-footer relative z-10 flex-shrink-0 border-t border-[var(--border-normal)] p-4"
 			style="background-color: var(--bg-modal);"
 		>
 			<div class="flex justify-end">
-				<div class="flex flex-col sm:flex-row sm:items-center items-end gap-3 sm:gap-6">
-					<span class="flex items-center gap-2 whitespace-nowrap">
-						<MapPinIcon size="20" />
+				<div class="flex flex-wrap justify-end items-center gap-3 lg:gap-6">
+					<span class="flex items-center gap-2 whitespace-nowrap text-sm text-[var(--text-secondary)]">
+						<span style="color: var(--text-primary);">
+							<MapPinIcon size="1.125rem" />
+						</span>
 						{photoArray.location || 'Unknown location'}
 					</span>
-					<span class="flex items-center gap-2 whitespace-nowrap">
-						<CalendarDotsIcon size="20" />
+					<span class="flex items-center gap-2 whitespace-nowrap text-sm text-[var(--text-secondary)]">
+						<span style="color: var(--text-primary);">
+							<CalendarDotsIcon size="1.125rem" />
+						</span>
 						{new Date(photoArray.timestamp).toLocaleDateString('en-US', {
 							month: 'long',
 							year: 'numeric'

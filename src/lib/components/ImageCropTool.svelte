@@ -220,26 +220,26 @@
 			<!-- Top -->
 			<div
 				class="absolute inset-x-0 top-0"
-				style="height: {cropY}px; background-color: rgba(75, 85, 99, 0.6);"
+				style="height: {cropY}px; background-color: rgba(75, 85, 99, 0.9);"
 			></div>
 			<!-- Bottom -->
 			<div
 				class="absolute inset-x-0"
 				style="top: {cropY + cropSize}px; height: {containerHeight -
 					cropY -
-					cropSize}px; background-color: rgba(75, 85, 99, 0.6);"
+					cropSize}px; background-color: rgba(75, 85, 99, 0.9);"
 			></div>
 			<!-- Left -->
 			<div
 				class="absolute"
-				style="left: 0; top: {cropY}px; width: {cropX}px; height: {cropSize}px; background-color: rgba(75, 85, 99, 0.6);"
+				style="left: 0; top: {cropY}px; width: {cropX}px; height: {cropSize}px; background-color: rgba(75, 85, 99, 0.9);"
 			></div>
 			<!-- Right -->
 			<div
 				class="absolute"
 				style="left: {cropX + cropSize}px; top: {cropY}px; width: {containerWidth -
 					cropX -
-					cropSize}px; height: {cropSize}px; background-color: rgba(75, 85, 99, 0.6);"
+					cropSize}px; height: {cropSize}px; background-color: rgba(75, 85, 99, 0.9);"
 			></div>
 		</div>
 
