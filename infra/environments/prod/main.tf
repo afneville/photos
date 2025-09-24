@@ -113,3 +113,7 @@ output "web_app_lambda_function_name" {
   value = module.photo_gallery.web_app_lambda_function_name
 }
 
+output "cloudfront_distribution_id" {
+  value = module.photo_gallery.cloudfront_distribution_id
+}
+

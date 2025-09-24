@@ -1,6 +1,6 @@
 .PHONY: format check test build-image extract-client strip-client upload-client clean help \
        deploy push-web-app push-image-processor sync-client \
-       ecr-login update-web-app update-image-processor create-admin-user delete-admin-user
+       ecr-login update-web-app update-image-processor create-admin-user delete-admin-user invalidate-cache
 
 # Variables
 IMAGE_NAME := photo-gallery
@@ -38,6 +38,7 @@ help:
 	@echo "Utility:"
 	@echo "  clean               - Clean up temporary files and images"
 	@echo "  ecr-login           - Login to ECR"
+	@echo "  invalidate-cache    - Invalidate CloudFront cache for / and /assets/*"
 	@echo ""
 	@echo "Admin User Management (requires ADMIN_EMAIL and ADMIN_PASSWORD env vars):"
 	@echo "  create-admin-user   - Create admin user in environment"
@@ -124,6 +125,16 @@ update-image-processor:
 		--function-name $(IMAGE_PROCESSOR_LAMBDA_NAME) \
 		--image-uri $(IMAGE_PROCESSOR_ECR_URL):latest \
 		--region $(AWS_REGION)
+
+# Cache invalidation target
+invalidate-cache:
+	$(eval CLOUDFRONT_DISTRIBUTION_ID := $(call get_terraform_output,$(ENVIRONMENT),cloudfront_distribution_id))
+	@test -n "$(CLOUDFRONT_DISTRIBUTION_ID)" || (echo "❌ CloudFront distribution ID not found for $(ENVIRONMENT)" && exit 1)
+	@echo "Creating CloudFront cache invalidation for distribution $(CLOUDFRONT_DISTRIBUTION_ID)..."
+	aws cloudfront create-invalidation \
+		--distribution-id $(CLOUDFRONT_DISTRIBUTION_ID) \
+		--paths "/" "/assets/*"
+	@echo "✅ Cache invalidation created successfully"
 
 # Deployment target
 deploy: build-image push-web-app push-image-processor sync-client update-web-app update-image-processor
