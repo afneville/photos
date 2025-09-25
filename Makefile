@@ -140,8 +140,20 @@ create-admin-user:
 	fi
 	$(eval COGNITO_USER_POOL_ID := $(call get_terraform_output,$(ENVIRONMENT),cognito_user_pool_id))
 	@test -n "$(COGNITO_USER_POOL_ID)" || (echo "Cognito user pool ID not found for $(ENVIRONMENT)" && exit 1)
+	@echo "Creating admin group if it doesn't exist..."
+	@aws cognito-idp create-group \
+		--group-name admin \
+		--user-pool-id $(COGNITO_USER_POOL_ID) \
+		--description "Admin users with full access" \
+		--region $(AWS_REGION) 2>/dev/null || echo "Admin group already exists or creation failed (continuing...)"
 	@if aws cognito-idp admin-get-user --user-pool-id $(COGNITO_USER_POOL_ID) --username $(ADMIN_EMAIL) --region $(AWS_REGION) >/dev/null 2>&1; then \
 		echo "Admin user $(ADMIN_EMAIL) already exists in $(ENVIRONMENT) user pool"; \
+		echo "Adding user to admin group..."; \
+		aws cognito-idp admin-add-user-to-group \
+			--user-pool-id $(COGNITO_USER_POOL_ID) \
+			--username $(ADMIN_EMAIL) \
+			--group-name admin \
+			--region $(AWS_REGION) || echo "User may already be in admin group"; \
 	else \
 		echo "Creating admin user $(ADMIN_EMAIL) in $(ENVIRONMENT) user pool..."; \
 		aws cognito-idp admin-create-user \
@@ -156,7 +168,12 @@ create-admin-user:
 			--password $(ADMIN_PASSWORD) \
 			--permanent \
 			--region $(AWS_REGION) && \
-		echo "Admin user $(ADMIN_EMAIL) created successfully in $(ENVIRONMENT)!"; \
+		aws cognito-idp admin-add-user-to-group \
+			--user-pool-id $(COGNITO_USER_POOL_ID) \
+			--username $(ADMIN_EMAIL) \
+			--group-name admin \
+			--region $(AWS_REGION) && \
+		echo "Admin user $(ADMIN_EMAIL) created and added to admin group successfully in $(ENVIRONMENT)!"; \
 	fi
 
 delete-admin-user:

@@ -68,7 +68,7 @@
 		</a>
 		{#if BUILD_INFO.commitHash}
 			<a
-				href="https://github.com/{BUILD_INFO.githubRepo}/commit/{BUILD_INFO.commitHash}"
+				href="https://github.com/{BUILD_INFO.githubRepo}/tree/{BUILD_INFO.commitHash}"
 				target="_blank"
 				rel="noopener noreferrer"
 				class="flex items-center gap-2 leading-none text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"

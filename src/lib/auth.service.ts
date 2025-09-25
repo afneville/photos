@@ -20,7 +20,14 @@ export class AuthService {
 
 	async isAuthenticated(token: string): Promise<boolean> {
 		try {
-			await this.verifier.verify(token);
+			const payload = await this.verifier.verify(token);
+			
+			// Check if user is in admin group
+			const groups = payload['cognito:groups'] as string[] | undefined;
+			if (!groups?.includes('admin')) {
+				return false;
+			}
+			
 			return true;
 		} catch {
 			return false;

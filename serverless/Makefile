@@ -101,6 +101,12 @@ create-admin-user:
 		echo "Error: ADMIN_PASSWORD environment variable is required"; \
 		exit 1; \
 	fi
+	@echo "Creating admin group if it doesn't exist..."
+	@aws cognito-idp create-group \
+		--group-name admin \
+		--user-pool-id $(COGNITO_USER_POOL_ID) \
+		--description "Admin users with full access" \
+		--region $(AWS_REGION) 2>/dev/null || echo "Admin group already exists or creation failed (continuing...)"
 	@echo "Creating admin user $(ADMIN_EMAIL) in user pool $(COGNITO_USER_POOL_ID)..."
 	aws cognito-idp admin-create-user \
 		--user-pool-id $(COGNITO_USER_POOL_ID) \
@@ -115,7 +121,13 @@ create-admin-user:
 		--password $(ADMIN_PASSWORD) \
 		--permanent \
 		--region $(AWS_REGION)
-	@echo "Admin user $(ADMIN_EMAIL) created successfully!"
+	@echo "Adding user to admin group..."
+	aws cognito-idp admin-add-user-to-group \
+		--user-pool-id $(COGNITO_USER_POOL_ID) \
+		--username $(ADMIN_EMAIL) \
+		--group-name admin \
+		--region $(AWS_REGION)
+	@echo "Admin user $(ADMIN_EMAIL) created and added to admin group successfully!"
 
 delete-admin-user:
 	@if [ -z "$(ADMIN_EMAIL)" ]; then \

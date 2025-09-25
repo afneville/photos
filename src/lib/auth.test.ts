@@ -65,13 +65,33 @@ describe('AuthService', () => {
 		});
 
 		describe('isAuthenticated', () => {
-			it('should return true for valid JWT token', async () => {
+			it('should return true for valid JWT token with admin group', async () => {
+				const mockVerify = vi.mocked((mockVerifier as any).verify);
+				mockVerify.mockResolvedValue({ 'cognito:groups': ['admin'] });
+
+				const result = await authService.isAuthenticated('valid.jwt.token');
+
+				expect(result).toBe(true);
+				expect(mockVerify).toHaveBeenCalledWith('valid.jwt.token');
+			});
+
+			it('should return false for valid JWT token without admin group', async () => {
+				const mockVerify = vi.mocked((mockVerifier as any).verify);
+				mockVerify.mockResolvedValue({ 'cognito:groups': ['user'] });
+
+				const result = await authService.isAuthenticated('valid.jwt.token');
+
+				expect(result).toBe(false);
+				expect(mockVerify).toHaveBeenCalledWith('valid.jwt.token');
+			});
+
+			it('should return false for valid JWT token with no groups', async () => {
 				const mockVerify = vi.mocked((mockVerifier as any).verify);
 				mockVerify.mockResolvedValue({});
 
 				const result = await authService.isAuthenticated('valid.jwt.token');
 
-				expect(result).toBe(true);
+				expect(result).toBe(false);
 				expect(mockVerify).toHaveBeenCalledWith('valid.jwt.token');
 			});
 
@@ -87,12 +107,23 @@ describe('AuthService', () => {
 		});
 
 		describe('requireAuth', () => {
-			it('should pass for valid authentication', async () => {
+			it('should pass for valid authentication with admin group', async () => {
 				const mockVerify = vi.mocked((mockVerifier as any).verify);
-				mockVerify.mockResolvedValue({});
+				mockVerify.mockResolvedValue({ 'cognito:groups': ['admin'] });
 				const event = createMockRequestEvent('valid.jwt.token');
 
 				await expect(authService.requireAuth(event)).resolves.not.toThrow();
+				expect(mockVerify).toHaveBeenCalledWith('valid.jwt.token');
+			});
+
+			it('should throw error for valid token without admin group', async () => {
+				const mockVerify = vi.mocked((mockVerifier as any).verify);
+				mockVerify.mockResolvedValue({ 'cognito:groups': ['user'] });
+				const event = createMockRequestEvent('valid.jwt.token');
+
+				await expect(authService.requireAuth(event)).rejects.toThrow(
+					'Invalid authentication token'
+				);
 				expect(mockVerify).toHaveBeenCalledWith('valid.jwt.token');
 			});
 
