@@ -52,10 +52,11 @@ export const actions: Actions = {
 				return fail(401, { error: 'Authentication failed' });
 			}
 
-			// Validate admin group membership before setting cookie
 			const authService = new AuthService();
-			const isValidAdmin = await authService.isAuthenticated(response.AuthenticationResult.AccessToken);
-			
+			const isValidAdmin = await authService.isAuthenticated(
+				response.AuthenticationResult.AccessToken
+			);
+
 			if (!isValidAdmin) {
 				return fail(403, { error: 'Admin access required' });
 			}

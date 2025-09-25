@@ -32,6 +32,10 @@
 	const photoArray = $derived(photoArrays[photoArrayIndex]);
 	const hasPreviousArray = $derived(photoArrayIndex > 0);
 	const hasNextArray = $derived(photoArrayIndex < photoArrays.length - 1);
+	const supportsFullscreen = $derived(() => {
+		if (typeof document === 'undefined') return false;
+		return !!document.documentElement.requestFullscreen;
+	});
 
 	const modalMaxWidth = 1152;
 	const modalMargin = 32;
@@ -125,13 +129,15 @@
 				>
 					<CaretRightIcon size="20" />
 				</button>
-				<button
-					class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--bg-hover)]"
-					onclick={openFullScreen}
-					aria-label="Full Screen"
-				>
-					<ArrowsOutSimpleIcon size="20" />
-				</button>
+				{#if supportsFullscreen()}
+					<button
+						class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--bg-hover)]"
+						onclick={openFullScreen}
+						aria-label="Full Screen"
+					>
+						<ArrowsOutSimpleIcon size="20" />
+					</button>
+				{/if}
 				<button
 					class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[var(--bg-hover)]"
 					onclick={onClose}
