@@ -154,7 +154,7 @@
 							sizes="(max-width: 480px) 80vw, (max-width: 768px) 80vw, (max-width: 1440px) 80vw, 72rem"
 							alt="Photo {index + 1} of {photoUris.length}"
 							class="h-full w-full object-cover"
-							style="aspect-ratio: 4/3; will-change: transform;"
+							style="aspect-ratio: 4/3; will-change: transform; color: transparent;"
 							bind:this={imageElements[index]}
 							loading={index === currentIndex ? 'eager' : 'lazy'}
 							fetchpriority={index === currentIndex ? 'high' : 'low'}

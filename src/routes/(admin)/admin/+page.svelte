@@ -385,6 +385,7 @@
 												src={getThumbnailUrl(photoArray, photoUri)}
 												alt="Photo {photoIndex + 1} from {photoArray.photoArrayId}"
 												class="h-20 w-20 rounded border border-gray-200 object-cover"
+												style="color: transparent;"
 											/>
 										</div>
 									{/each}

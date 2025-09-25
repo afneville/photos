@@ -44,6 +44,7 @@
 						src={getThumbnailUrl(photo)}
 						alt="Thumbnail for {photo.photoArrayId}"
 						class="h-full w-full object-cover transition-transform duration-200 hover:scale-105"
+						style="color: transparent;"
 					/>
 				{/if}
 			</div>
