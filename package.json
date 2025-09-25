@@ -14,8 +14,8 @@
 		"lint": "prettier --check . && eslint .",
 		"test": "vitest run",
 		"test:watch": "vitest --watch",
-		"test:setup": "docker run -d --name dynamodb-local-test -p 8000:8000 amazon/dynamodb-local:latest -jar DynamoDBLocal.jar -inMemory -port 8000",
-		"test:teardown": "docker stop dynamodb-local-test && docker rm dynamodb-local-test"
+		"test:setup": "podman run -d --name dynamodb-local-test -p 8000:8000 amazon/dynamodb-local:latest -jar DynamoDBLocal.jar -inMemory -port 8000",
+		"test:teardown": "podman stop dynamodb-local-test && podman rm dynamodb-local-test"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
